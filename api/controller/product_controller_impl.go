@@ -16,7 +16,7 @@ type ProductControllerImpl struct {
 func (p *ProductControllerImpl) GetAll(ctx *gin.Context) {
 	productResponse, err := p.ProductService.GetAll()
 	if err != nil {
-		logrus.WithError(err).Error("Error getting all products")
+		logrus.WithError(err).Error("[ProductControllerImpl.GetAll] Error getting all products")
 		errorResponse := response.BaseResponse{
 			Code:    500,
 			Status:  "Internal Server Error",
@@ -55,7 +55,7 @@ func (p *ProductControllerImpl) GetByID(ctx *gin.Context) {
 
 	productResponse, err := p.ProductService.GetByID(productId)
 	if err != nil {
-		logrus.WithError(err).Error("Error getting product by ID")
+		logrus.WithError(err).Error("[ProductControllerImpl.GetByID] Error getting product by ID")
 		errorResponse := response.BaseResponse{
 			Code:    500,
 			Status:  "Internal Server Error",
@@ -82,7 +82,7 @@ func (p *ProductControllerImpl) UpdateData(ctx *gin.Context) {
 	updateReq := request.UpdateDataRequest{}
 	err := ctx.BindJSON(&updateReq)
 	if err != nil {
-		logrus.WithError(err).Error("Error binding request")
+		logrus.WithError(err).Error("[ProductControllerImpl.UpdateData] Error binding request")
 		errorResponse := response.BaseResponse{
 			Code:    400,
 			Status:  "Bad Request",
@@ -96,7 +96,7 @@ func (p *ProductControllerImpl) UpdateData(ctx *gin.Context) {
 
 	success, err := p.ProductService.UpdateData(updateReq)
 	if err != nil {
-		logrus.WithError(err).Error("Error updating data")
+		logrus.WithError(err).Error("[ProductControllerImpl.UpdateData] Error updating data")
 		errorResponse := response.BaseResponse{
 			Code:    500,
 			Status:  "Internal Server Error",

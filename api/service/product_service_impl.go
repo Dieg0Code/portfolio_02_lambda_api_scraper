@@ -19,7 +19,7 @@ type ProductServiceImpl struct {
 func (p *ProductServiceImpl) GetAll() ([]response.ProductResponse, error) {
 	result, err := p.ProductRepository.GetAll()
 	if err != nil {
-		logrus.WithError(err).Error("Error getting all products")
+		logrus.WithError(err).Error("[ProductServiceImpl.GetAll] Error getting all products")
 		return nil, err
 	}
 
@@ -43,7 +43,7 @@ func (p *ProductServiceImpl) GetAll() ([]response.ProductResponse, error) {
 func (p *ProductServiceImpl) GetByID(productID string) (response.ProductResponse, error) {
 	result, err := p.ProductRepository.GetByID(productID)
 	if err != nil {
-		logrus.WithError(err).Error("Error getting product by ID")
+		logrus.WithError(err).Error("[ProductServiceImpl.GetByID] Error getting product by ID")
 		return response.ProductResponse{}, err
 	}
 
@@ -65,14 +65,14 @@ func (p *ProductServiceImpl) UpdateData(udateData request.UpdateDataRequest) (bo
 	if udateData.UpdateData {
 		err := p.ProductRepository.DeleteAll()
 		if err != nil {
-			logrus.WithError(err).Error("Error deleting all products")
+			logrus.WithError(err).Error("[ProductServiceImpl.UpdateData] Error deleting all products")
 			return false, err
 		}
 
 		for _, categoryInfo := range utils.Categories {
 			products, err := p.Scraper.ScrapeData(BaseURL, categoryInfo.MaxPage, categoryInfo.Category)
 			if err != nil {
-				logrus.WithError(err).Error("Error scraping data")
+				logrus.WithError(err).Error("[ProductServiceImpl.UpdateData] Error scraping data")
 				return false, err
 			}
 			for _, product := range products {

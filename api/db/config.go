@@ -9,11 +9,7 @@ import (
 )
 
 func NewDynamoDB(region string) *dynamodb.DynamoDB {
-	var dynamoEndpoint string
-	if os.Getenv("AWS_SAM_LOCAL") == "true" {
-		dynamoEndpoint = "http://localhost:8000"
-	}
-
+	dynamoEndpoint := os.Getenv("DYNAMO_ENDPOINT")
 	sess := session.Must(session.NewSession(&aws.Config{
 		Region:   aws.String(region),
 		Endpoint: aws.String(dynamoEndpoint),

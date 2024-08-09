@@ -7,6 +7,7 @@ import (
 
 	"github.com/dieg0code/serverles-api-scraper/api/models"
 	"github.com/gocolly/colly/v2"
+	"github.com/sirupsen/logrus"
 )
 
 type ScraperImpl struct{}
@@ -53,6 +54,7 @@ func (s *ScraperImpl) ScrapeData(baseURL string, maxPage int, category string) (
 	})
 
 	for i := 1; i <= maxPage; i++ {
+		logrus.Infof("Scraping page %d", i)
 		collector.Visit(fmt.Sprintf("https://%s/%s/page/%d/", baseURL, category, i))
 	}
 

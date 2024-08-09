@@ -2,7 +2,7 @@ AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 
 Resources:
-  MyGoLambdaFunction:
+  ServerlessApiScraper:
     Type: AWS::Serverless::Function
     Properties:
       Handler: main
@@ -12,13 +12,14 @@ Resources:
       Architectures:
         - x86_64
       MemorySize: 128
-      Timeout: 30
+      Timeout: 150
       Environment:
         Variables:
-          TABLE_NAME: "products"  # Aquí puedes definir tus variables de entorno
+          TABLE_NAME: "products"
+          DYNAMO_ENDPOINT: "http://host.docker.internal:8000"
       Policies:
-        - AWSLambdaBasicExecutionRole  # Políticas básicas para ejecutar la función Lambda
-        - AWSLambdaDynamoDBExecutionRole  # Si necesitas acceso a DynamoDB
+        - AWSLambdaBasicExecutionRole 
+        - AWSLambdaDynamoDBExecutionRole
       Events:
         ApiGateway:
           Type: Api
@@ -27,6 +28,6 @@ Resources:
             Method: ANY
 
 Outputs:
-  MyLambdaFunctionArn:
+  ServerlessApiScraperArn:
     Description: "ARN de la función Lambda desplegada"
-    Value: !GetAtt MyGoLambdaFunction.Arn
+    Value: !GetAtt ServerlessApiScraper.Arn
