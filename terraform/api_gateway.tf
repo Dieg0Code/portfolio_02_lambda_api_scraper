@@ -82,6 +82,23 @@ resource "aws_lambda_permission" "api_gateway" {
   source_arn    = "${aws_api_gateway_rest_api.api.execution_arn}/*/*"
 }
 
+resource "aws_api_gateway_stage" "api_stage" {
+  deployment_id = aws_api_gateway_deployment.api_deployment.id
+  rest_api_id = aws_api_gateway_rest_api.api.id
+  stage_name = "dev"
+}
+
+resource "aws_api_gateway_deployment" "api_deployment" {
+  depends_on = [
+    aws_api_gateway_method.get_products,
+    aws_api_gateway_method.get_product,
+    aws_api_gateway_method.post_products
+  ]
+
+  rest_api_id = aws_api_gateway_rest_api.api.id
+  stage_name  = "dev"
+}
+
 output "api_gateway_invoke_url" {
-  value = aws_api_gateway_rest_api.api.invoke_url
+  value = "https://${aws_api_gateway_rest_api.api.id}.execute-api.${var.aws_region}.amazonaws.com/${aws_api_gateway_stage.api_stage.stage_name}"
 }
