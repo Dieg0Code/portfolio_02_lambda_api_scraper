@@ -31,7 +31,7 @@ resource "aws_iam_policy" "lambda_policy" {
           "dynamodb:Query"
         ]
         Effect   = "Allow"
-        Resource = "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${aws_dynamodb_table.products_table.name}"
+        Resource = "arn:aws:dynamodb:sa-east-1:992382698192:table/${aws_dynamodb_table.products_table.name}"
       }
     ]
   })
