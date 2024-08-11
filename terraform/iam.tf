@@ -1,6 +1,5 @@
-# IAM role for lambda function
 resource "aws_iam_role" "lambda_role" {
-  name = "api_scraper_role"
+  name = "lambda_role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -16,34 +15,29 @@ resource "aws_iam_role" "lambda_role" {
   })
 }
 
-# Policy to allow lambda function to write to DynamoDB and CloudWatch logs
-resource "aws_iam_role_policy_attachment" "lambda_policy" {
-  role       = aws_iam_role.lambda_role.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
-}
-
-
-resource "aws_iam_role_policy" "dynamodb_policy" {
-  role = aws_iam_role.lambda_role.id
-
-  policy = jsonencode({
+resource "aws_iam_policy" "lambda_policy" {
+  name        = "lambda_policy"
+  description = "IAM policy for Lambda to access DynamoDB"
+  policy      = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
-        Effect = "Allow"
         Action = [
-          "dynamodb:GetItem",
           "dynamodb:PutItem",
+          "dynamodb:GetItem",
           "dynamodb:UpdateItem",
           "dynamodb:DeleteItem",
           "dynamodb:Scan",
           "dynamodb:Query"
         ]
-        Resource = [
-          aws_dynamodb_table.users_table.arn,
-          aws_dynamodb_table.products_table.arn
-        ]
+        Effect   = "Allow"
+        Resource = "arn:aws:dynamodb:${var.aws_region}:${var.aws_account_id}:table/${aws_dynamodb_table.products_table.name}"
       }
     ]
   })
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_policy_attachment" {
+  role       = aws_iam_role.lambda_role.name
+  policy_arn = aws_iam_policy.lambda_policy.arn
 }

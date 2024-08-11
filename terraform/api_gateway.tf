@@ -3,35 +3,21 @@ resource "aws_api_gateway_rest_api" "api" {
   description = "API Scraper"
 }
 
-# Resource for API Gateway /products endpoint
+# Resource for API Gateway /api/v1/products endpoint
 resource "aws_api_gateway_resource" "products" {
   rest_api_id = aws_api_gateway_rest_api.api.id
   parent_id   = aws_api_gateway_rest_api.api.root_resource_id
-  path_part   = "products"
+  path_part   = "api/v1/products"
 }
 
-# Resource for API Gateway /products/{id} endpoint
+# Resource for API Gateway /api/v1/products/{productId} endpoint
 resource "aws_api_gateway_resource" "product" {
   rest_api_id = aws_api_gateway_rest_api.api.id
   parent_id   = aws_api_gateway_resource.products.id
-  path_part   = "{id}"
+  path_part   = "{productId}"
 }
 
-# Resource for API Gateway /Users endpoint
-resource "aws_api_gateway_resource" "users" {
-  rest_api_id = aws_api_gateway_rest_api.api.id
-  parent_id   = aws_api_gateway_rest_api.api.root_resource_id
-  path_part   = "Users"
-}
-
-# Resource for API Gateway /Scraper endpoint
-resource "aws_api_gateway_resource" "scraper" {
-    rest_api_id = aws_api_gateway_rest_api.api.id
-    parent_id   = aws_api_gateway_rest_api.api.root_resource_id
-    path_part   = "Scraper"
-}
-
-# Method for GET /products endpoint
+# Method for GET /api/v1/products endpoint
 resource "aws_api_gateway_method" "get_products" {
   rest_api_id   = aws_api_gateway_rest_api.api.id
   resource_id   = aws_api_gateway_resource.products.id
@@ -39,7 +25,7 @@ resource "aws_api_gateway_method" "get_products" {
   authorization = "NONE"
 }
 
-# Method for GET /products/{id} endpoint
+# Method for GET /api/v1/products/{productId} endpoint
 resource "aws_api_gateway_method" "get_product" {
   rest_api_id   = aws_api_gateway_rest_api.api.id
   resource_id   = aws_api_gateway_resource.product.id
@@ -47,24 +33,15 @@ resource "aws_api_gateway_method" "get_product" {
   authorization = "NONE"
 }
 
-# Method for POST /Users endpoint
-resource "aws_api_gateway_method" "post_users" {
+# Method for POST /api/v1/products endpoint
+resource "aws_api_gateway_method" "post_products" {
   rest_api_id   = aws_api_gateway_rest_api.api.id
-  resource_id   = aws_api_gateway_resource.users.id
+  resource_id   = aws_api_gateway_resource.products.id
   http_method   = "POST"
   authorization = "NONE"
 }
 
-# Method for POST /Scraper endpoint (update data)
-resource "aws_api_gateway_method" "post_scraper" {
-    rest_api_id = aws_api_gateway_rest_api.api.id
-    resource_id = aws_api_gateway_resource.scraper.id
-    http_method = "POST"
-    authorization = "NONE"
-}
-
-
-# Integration for GET /products endpoint
+# Integration for GET /api/v1/products endpoint
 resource "aws_api_gateway_integration" "products_lambda_integration" {
   rest_api_id = aws_api_gateway_rest_api.api.id
   resource_id = aws_api_gateway_resource.products.id
@@ -75,7 +52,7 @@ resource "aws_api_gateway_integration" "products_lambda_integration" {
   uri                     = aws_lambda_function.api_scraper.invoke_arn
 }
 
-# Integration for GET /products/{id} endpoint
+# Integration for GET /api/v1/products/{productId} endpoint
 resource "aws_api_gateway_integration" "product_lambda_integration" {
   rest_api_id = aws_api_gateway_rest_api.api.id
   resource_id = aws_api_gateway_resource.product.id
@@ -86,25 +63,25 @@ resource "aws_api_gateway_integration" "product_lambda_integration" {
   uri                     = aws_lambda_function.api_scraper.invoke_arn
 }
 
-# Integration for POST /Users endpoint
-resource "aws_api_gateway_integration" "users_lambda_integration" {
+# Integration for POST /api/v1/products endpoint
+resource "aws_api_gateway_integration" "post_products_lambda_integration" {
   rest_api_id = aws_api_gateway_rest_api.api.id
-  resource_id = aws_api_gateway_resource.users.id
-  http_method = aws_api_gateway_method.post_users.http_method
+  resource_id = aws_api_gateway_resource.products.id
+  http_method = aws_api_gateway_method.post_products.http_method
 
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
   uri                     = aws_lambda_function.api_scraper.invoke_arn
 }
 
-# Integration for POST /Scraper endpoint
-resource "aws_api_gateway_integration" "scraper_lambda_integration" {
-    rest_api_id = aws_api_gateway_rest_api.api.id
-    resource_id = aws_api_gateway_resource.scraper.id
-    http_method = aws_api_gateway_method.post_scraper.http_method
-
-    integration_http_method = "POST"
-    type                    = "AWS_PROXY"
-    uri                     = aws_lambda_function.api_scraper.invoke_arn
+resource "aws_lambda_permission" "api_gateway" {
+  statement_id  = "AllowAPIGatewayInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.api_scraper.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_api_gateway_rest_api.api.execution_arn}/*/*"
 }
 
+output "api_gateway_invoke_url" {
+  value = aws_api_gateway_rest_api.api.invoke_url
+}

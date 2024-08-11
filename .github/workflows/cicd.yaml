@@ -1,0 +1,83 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  test-and-build:
+    name: Test and Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: '1.22.4'
+
+      - name: Cache dependencies
+        uses: actions/cache@v2
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Install dependencies
+        run: go mod download
+
+      - name: Run tests
+        run: go test -coverprofile=coverage.out ./...
+
+      - name: Upload coverage to codecov
+        uses: codecov/codecov-action@v2
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Build binary
+        run: GOOS=linux GOARCH=amd64 go build -o api_scraper_lambda
+
+      - name: Zip binary
+        run: zip api_scraper_lambda.zip api_scraper_lambda
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: api_scraper_lambda
+          path: api_scraper_lambda.zip
+
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    needs: test-and-build
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: api_scraper_lambda
+          path: .
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v1
+
+      - name: Initialize Terraform
+        working-directory: ./terraform
+        run: terraform init
+
+      - name: Apply Terraform
+        working-directory: ./terraform
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: terraform apply -auto-approve -var="aws_region=${{ secrets.AWS_REGION }}" -var="aws_account_id=${{ secrets.AWS_ACCOUNT_ID }}"
+      
+      - name: Get API Gateway URL
+        working-directory: ./terraform
+        run: echo "API Gateway URL => https://$(terraform output -json | jq -r '.api_gateway_invoke_url')"
+  

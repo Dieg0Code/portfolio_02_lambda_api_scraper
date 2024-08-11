@@ -1,7 +1,14 @@
 compile_lambda:
-	set GOOS=linux&& set GOARCH=amd64&& set CGO_ENABLED=0&& go build -o main main.go
+	set GOOS=linux&& set GOARCH=amd64&& set CGO_ENABLED=0&& go build -o api_scraper_lambda main.go
+
+zip_lambda:
+	zip api_scraper_lambda.zip api_scraper_lambda
+
+
 start_db:
 	docker run -d --name dynamodb -p 8000:8000 amazon/dynamodb-local
+
+
 create_table:
 	aws dynamodb create-table \
 		--table-name products \

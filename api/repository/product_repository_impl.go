@@ -7,12 +7,13 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
+	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 	"github.com/dieg0code/serverles-api-scraper/api/models"
 	"github.com/sirupsen/logrus"
 )
 
 type ProductRepositoryImpl struct {
-	db        *dynamodb.DynamoDB
+	db        dynamodbiface.DynamoDBAPI
 	tableName string
 }
 
@@ -138,7 +139,7 @@ func (p *ProductRepositoryImpl) GetByID(id string) (models.Product, error) {
 	return product, nil
 }
 
-func NewProductRepositoryImpl(db *dynamodb.DynamoDB, tableName string) ProductRepository {
+func NewProductRepositoryImpl(db dynamodbiface.DynamoDBAPI, tableName string) ProductRepository {
 	return &ProductRepositoryImpl{
 		db:        db,
 		tableName: tableName,

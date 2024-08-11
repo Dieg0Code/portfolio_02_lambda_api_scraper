@@ -11,6 +11,7 @@ import (
 	"github.com/dieg0code/serverles-api-scraper/api/router"
 	"github.com/dieg0code/serverles-api-scraper/api/service"
 	"github.com/dieg0code/serverles-api-scraper/api/utils"
+	"github.com/gocolly/colly/v2"
 	"github.com/sirupsen/logrus"
 )
 
@@ -19,11 +20,26 @@ var r *router.Router
 func init() {
 	logrus.Info("Initializing serverless API scraper")
 
-	db := db.NewDynamoDB("sa-east-1")
-	productRepo := repository.NewProductRepositoryImpl(db, "products")
-	scraper := utils.NewScraperImpl()
+	region := "sa-east-1"
+	tableName := "products"
+
+	// Instance DynamoDB
+	db := db.NewDynamoDB(region)
+
+	// Instance repository
+	productRepo := repository.NewProductRepositoryImpl(db, tableName)
+
+	// Instance colly and scraper
+	collector := colly.NewCollector()
+	scraper := utils.NewScraperImpl(collector)
+
+	// Instance service
 	productService := service.NewProductServiceImpl(productRepo, scraper)
+
+	// Instance controller
 	productController := controller.NewProductControllerImpl(productService)
+
+	// Instance router
 	r = router.NewRouter(productController)
 	r.InitRoutes()
 
