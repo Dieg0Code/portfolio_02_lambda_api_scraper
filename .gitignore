@@ -2,3 +2,4 @@
 /.aws-sam
 /main
 /.env
+./terraform/terraform.tfstate.backup
