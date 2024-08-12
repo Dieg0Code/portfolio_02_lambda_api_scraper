@@ -69,6 +69,8 @@ func (p *ProductServiceImpl) UpdateData(udateData request.UpdateDataRequest) (bo
 			return false, err
 		}
 
+		logrus.Info("[ProductServiceImpl.UpdateData] Scraping data started")
+
 		for _, categoryInfo := range utils.Categories {
 			products, err := p.Scraper.ScrapeData(BaseURL, categoryInfo.MaxPage, categoryInfo.Category)
 			if err != nil {
@@ -92,6 +94,7 @@ func (p *ProductServiceImpl) UpdateData(udateData request.UpdateDataRequest) (bo
 		}
 	}
 
+	logrus.Info("[ProductServiceImpl.UpdateData] Data scraped successfully")
 	return true, nil
 }
 

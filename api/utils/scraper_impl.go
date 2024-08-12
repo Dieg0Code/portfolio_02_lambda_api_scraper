@@ -53,7 +53,6 @@ func (s *ScraperImpl) ScrapeData(baseURL string, maxPage int, category string) (
 		})
 	})
 
-	logrus.Info("Start scraping data, this may take a while...")
 	for i := 1; i <= maxPage; i++ {
 		url := fmt.Sprintf("https://%s/%s/page/%d/", baseURL, category, i)
 		err := s.Collector.Visit(url)
@@ -66,8 +65,6 @@ func (s *ScraperImpl) ScrapeData(baseURL string, maxPage int, category string) (
 			return nil, err
 		}
 	}
-
-	logrus.Info("Scraping data finished")
 
 	return products, nil
 }
