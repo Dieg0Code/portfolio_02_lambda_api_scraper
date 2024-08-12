@@ -55,9 +55,14 @@ func (s *ScraperImpl) ScrapeData(baseURL string, maxPage int, category string) (
 
 	logrus.Info("Start scraping data, this may take a while...")
 	for i := 1; i <= maxPage; i++ {
-		err := s.Collector.Visit(fmt.Sprintf("https://%s/%s/page/%d/", baseURL, category, i))
+		url := fmt.Sprintf("https://%s/%s/page/%d/", baseURL, category, i)
+		err := s.Collector.Visit(url)
 		if err != nil {
-			logrus.WithError(err).Errorf("Failed to visit page %d", i)
+			logrus.WithError(err).Errorf("Failed to visit page %d at URL %s", i, url)
+			if err.Error() == "Not Found" {
+				continue
+			}
+
 			return nil, err
 		}
 	}
