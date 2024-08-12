@@ -10,5 +10,9 @@ resource "aws_dynamodb_table" "products_table" {
     name = "ProductID"
     type = "S"
   }
+
+  lifecycle {
+    ignore_changes = [name]
+  }
 }
 

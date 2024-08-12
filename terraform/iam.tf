@@ -13,6 +13,11 @@ resource "aws_iam_role" "lambda_role" {
       }
     ]
   })
+
+  lifecycle {
+    ignore_changes = [name]
+    
+  }
 }
 
 resource "aws_iam_policy" "lambda_policy" {
