@@ -83,7 +83,11 @@ func (p *ProductServiceImpl) UpdateData(udateData request.UpdateDataRequest) (bo
 					OriginalPrice:   product.OriginalPrice,
 					DiscountedPrice: product.DiscountedPrice,
 				}
-				p.ProductRepository.Create(productModel)
+				_, err := p.ProductRepository.Create(productModel)
+				if err != nil {
+					logrus.WithError(err).Error("[ProductServiceImpl.UpdateData] Error creating product")
+					return false, err
+				}
 			}
 		}
 	}

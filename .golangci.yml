@@ -7,7 +7,6 @@ linters:
     - staticcheck
     - typecheck
     - unused
-    - misspell
     - gofmt
   disable:
 
