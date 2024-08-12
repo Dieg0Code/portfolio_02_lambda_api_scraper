@@ -3,11 +3,25 @@ resource "aws_api_gateway_rest_api" "api" {
   description = "API Scraper"
 }
 
+# Resource for API Gateway /api endpoint
+resource "aws_api_gateway_resource" "api" {
+  rest_api_id = aws_api_gateway_rest_api.api.id
+  parent_id   = aws_api_gateway_rest_api.api.root_resource_id
+  path_part   = "api"
+}
+
+# Resource for API Gateway /api/v1 endpoint
+resource "aws_api_gateway_resource" "v1" {
+  rest_api_id = aws_api_gateway_rest_api.api.id
+  parent_id   = aws_api_gateway_resource.api.id
+  path_part   = "v1"
+}
+
 # Resource for API Gateway /api/v1/products endpoint
 resource "aws_api_gateway_resource" "products" {
   rest_api_id = aws_api_gateway_rest_api.api.id
-  parent_id   = aws_api_gateway_rest_api.api.root_resource_id
-  path_part   = "api/v1/products"
+  parent_id   = aws_api_gateway_resource.v1.id
+  path_part   = "products"
 }
 
 # Resource for API Gateway /api/v1/products/{productId} endpoint
@@ -84,21 +98,20 @@ resource "aws_lambda_permission" "api_gateway" {
 
 resource "aws_api_gateway_stage" "api_stage" {
   deployment_id = aws_api_gateway_deployment.api_deployment.id
-  rest_api_id = aws_api_gateway_rest_api.api.id
-  stage_name = "dev"
+  rest_api_id   = aws_api_gateway_rest_api.api.id
+  stage_name    = "dev"
 }
 
 resource "aws_api_gateway_deployment" "api_deployment" {
   depends_on = [
-    aws_api_gateway_method.get_products,
-    aws_api_gateway_method.get_product,
-    aws_api_gateway_method.post_products
+    aws_api_gateway_integration.products_lambda_integration,
+    aws_api_gateway_integration.product_lambda_integration,
+    aws_api_gateway_integration.post_products_lambda_integration
   ]
 
   rest_api_id = aws_api_gateway_rest_api.api.id
-  stage_name  = "dev"
 }
 
 output "api_gateway_invoke_url" {
-  value = "https://${aws_api_gateway_rest_api.api.id}.execute-api.sa-east-1.amazonaws.com/${aws_api_gateway_stage.api_stage.stage_name}"
+  value = "https://${aws_api_gateway_rest_api.api.id}.execute-api.sa-east-1.amazonaws.com/${aws_api_gateway_stage.api_stage.stage_name}/api/v1/products"
 }

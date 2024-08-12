@@ -1,9 +1,9 @@
 resource "aws_lambda_function" "api_scraper" {
-  filename      = "api_scraper.zip"
+  filename      = "../api_scraper_lambda.zip"
   function_name = "api_scraper"
   role          = aws_iam_role.lambda_role.arn
-  handler       = "api_scraper_lambda"
-  runtime       = "go1.x"
+  handler       = "bootstrap"
+  runtime       = "provided.al2023"
   memory_size   = 128
   timeout       = 150
 

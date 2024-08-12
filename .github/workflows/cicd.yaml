@@ -28,6 +28,11 @@ jobs:
 
       - name: Install dependencies
         run: go mod download
+      
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v6.0.1
+        with:
+          args: --out-format colored-line-number
 
       - name: Run tests
         run: go test -coverprofile=coverage.out ./...
@@ -38,10 +43,10 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Build binary
-        run: GOOS=linux GOARCH=amd64 go build -o api_scraper_lambda
+        run: GOOS=linux GOARCH=amd64 go build -o bootstrap main.go
 
       - name: Zip binary
-        run: zip api_scraper_lambda.zip api_scraper_lambda
+        run: zip api_scraper_lambda.zip bootstrap
 
       - name: Upload artifact
         uses: actions/upload-artifact@v2
@@ -70,6 +75,10 @@ jobs:
         working-directory: ./terraform
         run: terraform init
 
+      - name: Plan Terraform
+        working-directory: ./terraform
+        run: terraform plan
+
       - name: Apply Terraform
         working-directory: ./terraform
         env:
@@ -79,5 +88,5 @@ jobs:
       
       - name: Get API Gateway URL
         working-directory: ./terraform
-        run: echo "API Gateway URL => https://$(terraform output -json | jq -r '.api_gateway_invoke_url')"
+        run: echo "API Gateway URL => $(terraform output -json | jq -r '.api_gateway_invoke_url')"
   

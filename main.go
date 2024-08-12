@@ -21,7 +21,7 @@ func init() {
 	logrus.Info("Initializing serverless API scraper")
 
 	region := "sa-east-1"
-	tableName := "products"
+	tableName := "Products"
 
 	// Instance DynamoDB
 	db := db.NewDynamoDB(region)
