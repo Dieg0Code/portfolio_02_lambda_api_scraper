@@ -63,7 +63,7 @@ resource "aws_api_gateway_integration" "products_lambda_integration" {
 
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
-  uri                     = aws_lambda_function.api_scraper.invoke_arn
+  uri                     = aws_lambda_function.api_products.invoke_arn
 }
 
 # Integration for GET /api/v1/products/{productId} endpoint
@@ -74,7 +74,7 @@ resource "aws_api_gateway_integration" "product_lambda_integration" {
 
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
-  uri                     = aws_lambda_function.api_scraper.invoke_arn
+  uri                     = aws_lambda_function.api_products.invoke_arn
 }
 
 # Integration for POST /api/v1/products endpoint
@@ -85,13 +85,13 @@ resource "aws_api_gateway_integration" "post_products_lambda_integration" {
 
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
-  uri                     = aws_lambda_function.api_scraper.invoke_arn
+  uri                     = aws_lambda_function.api_products.invoke_arn
 }
 
 resource "aws_lambda_permission" "api_gateway" {
   statement_id  = "AllowAPIGatewayInvoke"
   action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.api_scraper.function_name
+  function_name = aws_lambda_function.api_products.function_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_api_gateway_rest_api.api.execution_arn}/*/*"
 }
