@@ -1,6 +1,17 @@
-# Serverless Api Scraper
+![infra](infra_p02.png)
+
+# Serverless Api-Scraper
 
 Serverless API. Scrape data from a supermarket website and store it in a dynamoDB database.
+
+Its a mono-repo with the following structure:
+
+- `api` - Serverless API
+- `scraper` - Serverless Scraper
+- `shared` - Shared code
+
+The infrastructure is defined using Terraform.
+
 
 - `[GET] /api/v1/products` - Get all products
 
