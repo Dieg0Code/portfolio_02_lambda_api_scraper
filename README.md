@@ -12,6 +12,7 @@ Its a mono-repo with the following structure:
 
 The infrastructure is defined using Terraform.
 
+The api lambda is triggered by an API Gateway and the scraper lambda is triggered by the api.
 
 - `[GET] /api/v1/products` - Get all products
 
