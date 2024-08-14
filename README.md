@@ -332,3 +332,52 @@ graph TD
     post_method --> lambda_api_products
 
 ```
+
+## CI/CD Pipeline
+
+```mermaid
+graph TD
+    A[Push to main branch] -->|Trigger| B[CI/CD Pipeline]
+    B --> C[Test and Build API]
+    B --> D[Test and Build Scraper]
+    
+    subgraph "Test and Build API"
+    C --> C1[Checkout code]
+    C1 --> C2[Set up Go]
+    C2 --> C3[Sync modules]
+    C3 --> C4[Cache dependencies]
+    C4 --> C5[Install dependencies]
+    C5 --> C6[Run golangci-lint]
+    C6 --> C7[Run tests]
+    C7 --> C8[Upload coverage to codecov]
+    C8 --> C9[Build API binary]
+    C9 --> C10[Zip API binary]
+    C10 --> C11[Upload API artifact]
+    end
+    
+    subgraph "Test and Build Scraper"
+    D --> D1[Checkout code]
+    D1 --> D2[Set up Go]
+    D2 --> D3[Cache dependencies]
+    D3 --> D4[Install dependencies]
+    D4 --> D5[Run golangci-lint]
+    D5 --> D6[Run tests]
+    D6 --> D7[Upload coverage to codecov]
+    D7 --> D8[Build Scraper binary]
+    D8 --> D9[Zip Scraper binary]
+    D9 --> D10[Upload Scraper artifact]
+    end
+    
+    C11 --> E[Deploy]
+    D10 --> E
+    
+    subgraph "Deploy"
+    E --> E1[Checkout code]
+    E1 --> E2[Download API artifact]
+    E2 --> E3[Download Scraper artifact]
+    E3 --> E4[Set up Terraform]
+    E4 --> E5[Initialize Terraform]
+    E5 --> E6[Plan Terraform]
+    E6 --> E7[Apply Terraform]
+    end
+```
