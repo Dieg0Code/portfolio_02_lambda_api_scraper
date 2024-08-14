@@ -5,7 +5,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
-	"github.com/dieg0code/serverles-api-scraper/api/models"
+	"github.com/dieg0code/shared/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -16,11 +16,6 @@ type MockDynamoDB struct {
 	mock.Mock
 }
 
-func (m *MockDynamoDB) PutItem(input *dynamodb.PutItemInput) (*dynamodb.PutItemOutput, error) {
-	args := m.Called(input)
-	return args.Get(0).(*dynamodb.PutItemOutput), args.Error(1)
-}
-
 func (m *MockDynamoDB) GetItem(input *dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error) {
 	args := m.Called(input)
 	return args.Get(0).(*dynamodb.GetItemOutput), args.Error(1)
@@ -29,33 +24,6 @@ func (m *MockDynamoDB) GetItem(input *dynamodb.GetItemInput) (*dynamodb.GetItemO
 func (m *MockDynamoDB) Scan(input *dynamodb.ScanInput) (*dynamodb.ScanOutput, error) {
 	args := m.Called(input)
 	return args.Get(0).(*dynamodb.ScanOutput), args.Error(1)
-}
-
-func (m *MockDynamoDB) DeleteItem(input *dynamodb.DeleteItemInput) (*dynamodb.DeleteItemOutput, error) {
-	args := m.Called(input)
-	return args.Get(0).(*dynamodb.DeleteItemOutput), args.Error(1)
-}
-
-// NewProductRepositoryImpl creates a new ProductRepositoryImpl with the given DynamoDBAPI and table name
-func TestProductRepositoryImpl_Create(t *testing.T) {
-	mockDB := new(MockDynamoDB)
-	repo := NewProductRepositoryImpl(mockDB, "test-table")
-
-	product := models.Product{
-		ProductID:       "test-id",
-		Name:            "Test Product",
-		Category:        "Test Category",
-		OriginalPrice:   100,
-		DiscountedPrice: 90,
-	}
-
-	mockDB.On("PutItem", mock.Anything).Return(&dynamodb.PutItemOutput{}, nil)
-
-	createdProduct, err := repo.Create(product)
-
-	assert.NoError(t, err, "Expected no error, Create() returned an error")
-	assert.Equal(t, product, createdProduct, "Expected created product to be equal to the input product")
-	mockDB.AssertExpectations(t)
 }
 
 // NewProductRepositoryImpl creates a new ProductRepositoryImpl with the given DynamoDBAPI and table name
@@ -133,28 +101,6 @@ func TestProductRepositoryImpl_GetAll(t *testing.T) {
 
 	assert.NoError(t, err, "Expected no error, GetAll() returned an error")
 	assert.Equal(t, expectedProducts, products, "Expected products to be equal to the expected products")
-	mockDB.AssertExpectations(t)
-}
-
-// NewProductRepositoryImpl creates a new ProductRepositoryImpl with the given DynamoDBAPI and table name
-func TestProductRepositoryImpl_DeleteAll(t *testing.T) {
-	mockDB := new(MockDynamoDB)
-	repo := NewProductRepositoryImpl(mockDB, "test-table")
-
-	// Mock Scan response
-	mockDB.On("Scan", mock.Anything).Return(&dynamodb.ScanOutput{
-		Items: []map[string]*dynamodb.AttributeValue{
-			{
-				"ProductID": {S: stringPtr("test-id-1")},
-			},
-		},
-	}, nil)
-
-	// Mock DeleteItem response
-	mockDB.On("DeleteItem", mock.Anything).Return(&dynamodb.DeleteItemOutput{}, nil)
-
-	err := repo.DeleteAll()
-	assert.NoError(t, err, "Expected no error, DeleteAll() returned an error")
 	mockDB.AssertExpectations(t)
 }
 

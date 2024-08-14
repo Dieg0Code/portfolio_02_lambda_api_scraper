@@ -6,12 +6,10 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/dieg0code/serverles-api-scraper/api/controller"
-	"github.com/dieg0code/serverles-api-scraper/api/db"
 	"github.com/dieg0code/serverles-api-scraper/api/repository"
 	"github.com/dieg0code/serverles-api-scraper/api/router"
 	"github.com/dieg0code/serverles-api-scraper/api/service"
-	"github.com/dieg0code/serverles-api-scraper/api/utils"
-	"github.com/gocolly/colly/v2"
+	"github.com/dieg0code/shared/db"
 	"github.com/sirupsen/logrus"
 )
 
@@ -29,12 +27,12 @@ func init() {
 	// Instance repository
 	productRepo := repository.NewProductRepositoryImpl(db, tableName)
 
-	// Instance colly and scraper
-	collector := colly.NewCollector()
-	scraper := utils.NewScraperImpl(collector)
+	//  Instance colly and scraper
+	// collector := colly.NewCollector()
+	// scraper := utils.NewScraperImpl(collector)
 
 	// Instance service
-	productService := service.NewProductServiceImpl(productRepo, scraper)
+	productService := service.NewProductServiceImpl(productRepo)
 
 	// Instance controller
 	productController := controller.NewProductControllerImpl(productService)

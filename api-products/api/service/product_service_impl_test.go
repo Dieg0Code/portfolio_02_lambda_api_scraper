@@ -3,10 +3,8 @@ package service
 import (
 	"testing"
 
-	"github.com/dieg0code/serverles-api-scraper/api/data/request"
 	"github.com/dieg0code/serverles-api-scraper/api/data/response"
-	"github.com/dieg0code/serverles-api-scraper/api/models"
-	"github.com/dieg0code/serverles-api-scraper/api/utils"
+	"github.com/dieg0code/shared/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -48,8 +46,7 @@ func (m *MockScraper) CleanPrice(price string) (int, error) {
 
 func TestPoductService_GetAll(t *testing.T) {
 	mockRepo := new(MockProductRepository)
-	mockScraper := new(MockScraper)
-	productService := NewProductServiceImpl(mockRepo, mockScraper)
+	productService := NewProductServiceImpl(mockRepo)
 
 	expectedProducts := []response.ProductResponse{
 		{
@@ -96,8 +93,7 @@ func TestPoductService_GetAll(t *testing.T) {
 
 func TestPoductService_GetByID(t *testing.T) {
 	mockRepo := new(MockProductRepository)
-	mockScraper := new(MockScraper)
-	productService := NewProductServiceImpl(mockRepo, mockScraper)
+	productService := NewProductServiceImpl(mockRepo)
 
 	expectedProduct := response.ProductResponse{
 		ProductID:       "test-id",
@@ -123,50 +119,50 @@ func TestPoductService_GetByID(t *testing.T) {
 	mockRepo.AssertExpectations(t)
 }
 
-func TestProductService_UpdateData(t *testing.T) {
-	mockRepo := new(MockProductRepository)
-	mockScraper := new(MockScraper)
-	productService := NewProductServiceImpl(mockRepo, mockScraper)
+// func TestProductService_UpdateData(t *testing.T) {
+// 	mockRepo := new(MockProductRepository)
+// 	mockScraper := new(MockScraper)
+// 	productService := NewProductServiceImpl(mockRepo, mockScraper)
 
-	mockRepo.On("DeleteAll").Return(nil)
+// 	mockRepo.On("DeleteAll").Return(nil)
 
-	utils.Categories = []utils.CategoryInfo{
-		{MaxPage: 10, Category: "bebidas-alcoholicas"},
-		{MaxPage: 5, Category: "alimentos-basicos"},
-	}
+// 	utils.Categories = []utils.CategoryInfo{
+// 		{MaxPage: 10, Category: "bebidas-alcoholicas"},
+// 		{MaxPage: 5, Category: "alimentos-basicos"},
+// 	}
 
-	mockScraper.On("ScrapeData", "cugat.cl/categoria-producto", 10, "bebidas-alcoholicas").Return([]models.Product{
-		{
-			Name:            "Product 1",
-			Category:        "bebidas-alcoholicas",
-			OriginalPrice:   100,
-			DiscountedPrice: 90,
-		},
-	}, nil)
+// 	mockScraper.On("ScrapeData", "cugat.cl/categoria-producto", 10, "bebidas-alcoholicas").Return([]models.Product{
+// 		{
+// 			Name:            "Product 1",
+// 			Category:        "bebidas-alcoholicas",
+// 			OriginalPrice:   100,
+// 			DiscountedPrice: 90,
+// 		},
+// 	}, nil)
 
-	mockScraper.On("ScrapeData", "cugat.cl/categoria-producto", 5, "alimentos-basicos").Return([]models.Product{
-		{
-			Name:            "Product 2",
-			Category:        "alimentos-basicos",
-			OriginalPrice:   200,
-			DiscountedPrice: 180,
-		},
-	}, nil)
+// 	mockScraper.On("ScrapeData", "cugat.cl/categoria-producto", 5, "alimentos-basicos").Return([]models.Product{
+// 		{
+// 			Name:            "Product 2",
+// 			Category:        "alimentos-basicos",
+// 			OriginalPrice:   200,
+// 			DiscountedPrice: 180,
+// 		},
+// 	}, nil)
 
-	mockRepo.On("Create", mock.MatchedBy(func(product models.Product) bool {
-		return product.Name == "Product 1" && product.Category == "bebidas-alcoholicas" ||
-			product.Name == "Product 2" && product.Category == "alimentos-basicos"
-	})).Return(models.Product{}, nil)
+// 	mockRepo.On("Create", mock.MatchedBy(func(product models.Product) bool {
+// 		return product.Name == "Product 1" && product.Category == "bebidas-alcoholicas" ||
+// 			product.Name == "Product 2" && product.Category == "alimentos-basicos"
+// 	})).Return(models.Product{}, nil)
 
-	updateDataRequest := request.UpdateDataRequest{
-		UpdateData: true,
-	}
+// 	updateDataRequest := request.UpdateDataRequest{
+// 		UpdateData: true,
+// 	}
 
-	success, err := productService.UpdateData(updateDataRequest)
+// 	success, err := productService.UpdateData(updateDataRequest)
 
-	assert.NoError(t, err, "Expected no error, UpdateData() returned an error")
-	assert.True(t, success, "Expected success to be true")
+// 	assert.NoError(t, err, "Expected no error, UpdateData() returned an error")
+// 	assert.True(t, success, "Expected success to be true")
 
-	mockRepo.AssertExpectations(t)
-	mockScraper.AssertExpectations(t)
-}
+// 	mockRepo.AssertExpectations(t)
+// 	mockScraper.AssertExpectations(t)
+// }

@@ -1,0 +1,27 @@
+codecov:
+  # Global configurations
+  require_ci_to_pass: yes  # Asegúrate de que CI pase antes de enviar el reporte
+  branch: main  # Rama predeterminada para comparar los reportes de cobertura
+  
+  # Coverage reporting
+  coverage:
+    precision: 2  # Número de decimales para los porcentajes de cobertura
+    round: down  # Redondear hacia abajo (puedes usar 'up' o 'nearest' también)
+    
+  # Report processing
+  coverage:
+    ignore:
+      - "vendor/**"  # Ignorar archivos en directorios vendor
+    paths:
+      - "api-products/coverage.out"  # Ruta al reporte de cobertura de API
+      - "scraper/coverage.out"  # Ruta al reporte de cobertura de Scraper
+    status:
+      project:
+        default:
+          threshold: 80  # Porcentaje de cobertura requerido para pasar
+
+  # Configuration for coverage reporting
+  status:
+    project:
+      default:
+        target: auto  # Nombre del contexto de estado predeterminado

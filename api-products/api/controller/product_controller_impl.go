@@ -94,15 +94,31 @@ func (p *ProductControllerImpl) UpdateData(ctx *gin.Context) {
 		return
 	}
 
-	done := make(chan bool)
-	go func() {
-		_, err = p.ProductService.UpdateData(updateReq)
-		if err != nil {
-			logrus.WithError(err).Error("[ProductControllerImpl.UpdateData] Error updating data")
+	success, err := p.ProductService.UpdateData(updateReq)
+	if err != nil {
+		logrus.WithError(err).Error("[ProductControllerImpl.UpdateData] Error updating data")
+		errorResponse := response.BaseResponse{
+			Code:    500,
+			Status:  "Internal Server Error",
+			Message: "Error updating data",
+			Data:    nil,
 		}
 
-		done <- true
-	}()
+		ctx.JSON(500, errorResponse)
+		return
+	}
+
+	if !success {
+		errorResponse := response.BaseResponse{
+			Code:    400,
+			Status:  "Bad Request",
+			Message: "Error updating data",
+			Data:    nil,
+		}
+
+		ctx.JSON(400, errorResponse)
+		return
+	}
 
 	successResponse := response.BaseResponse{
 		Code:    200,
@@ -112,11 +128,6 @@ func (p *ProductControllerImpl) UpdateData(ctx *gin.Context) {
 	}
 
 	ctx.JSON(200, successResponse)
-
-	go func() {
-		<-done
-		logrus.Info("[ProductControllerImpl.UpdateData] Data scraping finished")
-	}()
 }
 
 func NewProductControllerImpl(productService service.ProductService) ProductController {

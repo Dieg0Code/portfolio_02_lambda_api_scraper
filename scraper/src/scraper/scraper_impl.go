@@ -1,12 +1,12 @@
-package utils
+package scraper
 
 import (
 	"fmt"
 	"strconv"
 	"strings"
 
-	"github.com/dieg0code/serverles-api-scraper/api/models"
-	"github.com/gocolly/colly/v2"
+	"github.com/dieg0code/shared/models"
+	"github.com/gocolly/colly"
 	"github.com/sirupsen/logrus"
 )
 

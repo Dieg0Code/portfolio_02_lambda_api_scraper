@@ -1,5 +1,4 @@
-// categories.go
-package utils
+package scraper
 
 type CategoryInfo struct {
 	Category string

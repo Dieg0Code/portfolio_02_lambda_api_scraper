@@ -1,18 +1,17 @@
 package service
 
 import (
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/dieg0code/serverles-api-scraper/api/data/request"
 	"github.com/dieg0code/serverles-api-scraper/api/data/response"
-	"github.com/dieg0code/serverles-api-scraper/api/models"
 	"github.com/dieg0code/serverles-api-scraper/api/repository"
-	"github.com/dieg0code/serverles-api-scraper/api/utils"
-	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
 
 type ProductServiceImpl struct {
 	ProductRepository repository.ProductRepository
-	Scraper           utils.Scraper
 }
 
 // GetAll implements ProductService.
@@ -59,48 +58,40 @@ func (p *ProductServiceImpl) GetByID(productID string) (response.ProductResponse
 }
 
 // UpdateData implements ProductService.
-func (p *ProductServiceImpl) UpdateData(udateData request.UpdateDataRequest) (bool, error) {
-	const BaseURL string = "cugat.cl/categoria-producto"
-
-	if udateData.UpdateData {
-		err := p.ProductRepository.DeleteAll()
-		if err != nil {
-			logrus.WithError(err).Error("[ProductServiceImpl.UpdateData] Error deleting all products")
-			return false, err
-		}
-
-		logrus.Info("[ProductServiceImpl.UpdateData] Scraping data started")
-
-		for _, categoryInfo := range utils.Categories {
-			products, err := p.Scraper.ScrapeData(BaseURL, categoryInfo.MaxPage, categoryInfo.Category)
-			if err != nil {
-				logrus.WithError(err).Error("[ProductServiceImpl.UpdateData] Error scraping data")
-				return false, err
-			}
-			for _, product := range products {
-				productModel := models.Product{
-					ProductID:       uuid.New().String(),
-					Name:            product.Name,
-					Category:        product.Category,
-					OriginalPrice:   product.OriginalPrice,
-					DiscountedPrice: product.DiscountedPrice,
-				}
-				_, err := p.ProductRepository.Create(productModel)
-				if err != nil {
-					logrus.WithError(err).Error("[ProductServiceImpl.UpdateData] Error creating product")
-					return false, err
-				}
-			}
-		}
+func (p *ProductServiceImpl) UpdateData(updateData request.UpdateDataRequest) (bool, error) {
+	if !updateData.UpdateData {
+		return false, nil
 	}
 
-	logrus.Info("[ProductServiceImpl.UpdateData] Data scraped successfully")
+	// Crear una nueva sesión de AWS
+	sess, err := session.NewSession(&aws.Config{
+		Region: aws.String("sa-east-1"), // Reemplaza con tu región de AWS
+	})
+	if err != nil {
+		logrus.WithError(err).Error("[ProductServiceImpl.UpdateData] Error creating AWS session")
+		return false, err
+	}
+
+	// Crear un nuevo cliente Lambda
+	svc := lambda.New(sess)
+
+	// Preparar la entrada para invocar la función Lambda
+	input := &lambda.InvokeInput{
+		FunctionName: aws.String("scraper"),
+	}
+
+	// Invocar la función Lambda
+	_, err = svc.Invoke(input)
+	if err != nil {
+		logrus.WithError(err).Error("[ProductServiceImpl.UpdateData] Error invoking lambda function")
+		return false, err
+	}
+
 	return true, nil
 }
 
-func NewProductServiceImpl(productRepository repository.ProductRepository, scraper utils.Scraper) ProductService {
+func NewProductServiceImpl(productRepository repository.ProductRepository) ProductService {
 	return &ProductServiceImpl{
 		ProductRepository: productRepository,
-		Scraper:           scraper,
 	}
 }
