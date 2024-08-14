@@ -77,7 +77,8 @@ func (p *ProductServiceImpl) UpdateData(updateData request.UpdateDataRequest) (b
 
 	// Preparar la entrada para invocar la función Lambda
 	input := &lambda.InvokeInput{
-		FunctionName: aws.String("scraper"),
+		FunctionName:   aws.String("scraper"),
+		InvocationType: aws.String("Event"),
 	}
 
 	// Invocar la función Lambda
