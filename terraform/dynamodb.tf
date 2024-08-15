@@ -10,10 +10,6 @@ resource "aws_dynamodb_table" "products_table" {
     name = "ProductID"
     type = "S"
   }
-
-  lifecycle {
-    ignore_changes = [name]
-  }
 }
 
 resource "aws_dynamodb_table" "users_table" {
@@ -24,10 +20,6 @@ resource "aws_dynamodb_table" "users_table" {
   attribute {
     name = "UserID"
     type = "S"
-  }
-
-  lifecycle {
-    ignore_changes = [name]
   }
 }
 

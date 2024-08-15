@@ -14,10 +14,6 @@ resource "aws_iam_role" "lambda_role" {
       }
     ]
   })
-
-  lifecycle {
-    ignore_changes = [name]
-  }
 }
 
 # Policy for Lambda to access DynamoDB Products table
@@ -104,29 +100,4 @@ resource "aws_iam_role_policy_attachment" "lambda_users_policy_attachment" {
 resource "aws_iam_role_policy_attachment" "lambda_invoke_policy_attachment" {
   role       = aws_iam_role.lambda_role.name
   policy_arn = aws_iam_policy.lambda_invoke_policy.arn
-}
-
-resource "aws_iam_role" "api_gateway_role" {
-  name = "api-gateway-cloudwatch-logs-role"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Principal = {
-          Service = "apigateway.amazonaws.com"
-        }
-      },
-    ]
-  })
-
-  managed_policy_arns = [
-    "arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs"
-  ]
-}
-
-resource "aws_api_gateway_account" "api_account" {
-  cloudwatch_role_arn = aws_iam_role.api_gateway_role.arn
 }
