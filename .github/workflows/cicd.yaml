@@ -116,6 +116,59 @@ jobs:
         with:
           name: scraper_lambda
           path: ./scraper/scraper_lambda.zip
+  
+  test-and-build-api-users:
+    name: Test and Build API Users
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: '1.22.4'
+
+      - name: Cache dependencies
+        uses: actions/cache@v2
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Install dependencies
+        working-directory: ./api-users
+        run: go mod download
+
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v6.0.1
+        with:
+          working-directory: .
+          args: --out-format colored-line-number ./api-users/...
+
+      - name: Run tests
+        working-directory: ./api-users
+        run: go test -coverprofile=coverage.out ./...
+
+      - name: Upload coverage to codecov
+        uses: codecov/codecov-action@v2
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Build API Users binary
+        working-directory: ./api-users
+        run: GOOS=linux GOARCH=amd64 go build -o bootstrap main.go
+
+      - name: Zip API Users binary
+        working-directory: ./api-users
+        run: zip api_users_lambda.zip bootstrap
+
+      - name: Upload API Users artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: api_users_lambda
+          path: ./api-users/api_users_lambda.zip
 
   deploy:
     name: Deploy
@@ -135,6 +188,12 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: scraper_lambda
+          path: ./terraform
+
+      - name: Download API Users artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: api_users_lambda
           path: ./terraform
 
       - name: Set up Terraform
