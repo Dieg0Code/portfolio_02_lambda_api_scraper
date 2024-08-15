@@ -3,7 +3,7 @@ package service
 import (
 	"testing"
 
-	"github.com/dieg0code/serverles-api-scraper/api/data/response"
+	"github.com/dieg0code/shared/json/response"
 	"github.com/dieg0code/shared/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

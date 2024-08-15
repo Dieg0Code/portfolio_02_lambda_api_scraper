@@ -16,3 +16,18 @@ resource "aws_dynamodb_table" "products_table" {
   }
 }
 
+resource "aws_dynamodb_table" "users_table" {
+  name        = "Users"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key    = "UserID"
+
+  attribute {
+    name = "UserID"
+    type = "S"
+  }
+
+  lifecycle {
+    ignore_changes = [name]
+  }
+}
+

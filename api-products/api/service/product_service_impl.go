@@ -5,8 +5,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/dieg0code/serverles-api-scraper/api/data/request"
-	"github.com/dieg0code/serverles-api-scraper/api/data/response"
 	"github.com/dieg0code/serverles-api-scraper/api/repository"
+	"github.com/dieg0code/shared/json/response"
 	"github.com/sirupsen/logrus"
 )
 

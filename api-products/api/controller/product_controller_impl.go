@@ -2,8 +2,8 @@ package controller
 
 import (
 	"github.com/dieg0code/serverles-api-scraper/api/data/request"
-	"github.com/dieg0code/serverles-api-scraper/api/data/response"
 	"github.com/dieg0code/serverles-api-scraper/api/service"
+	"github.com/dieg0code/shared/json/response"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 )

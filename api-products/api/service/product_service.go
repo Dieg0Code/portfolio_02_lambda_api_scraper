@@ -2,7 +2,7 @@ package service
 
 import (
 	"github.com/dieg0code/serverles-api-scraper/api/data/request"
-	"github.com/dieg0code/serverles-api-scraper/api/data/response"
+	"github.com/dieg0code/shared/json/response"
 )
 
 type ProductService interface {
