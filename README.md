@@ -6,7 +6,7 @@ Serverless API. Scrape data from a supermarket website and store it in a dynamoD
 
 Its a mono-repo with the following structure:
 
-- `api` - Serverless API
+- `api` - Serverless API - Products
 - `scraper` - Serverless Scraper
 - `shared` - Shared code
 
