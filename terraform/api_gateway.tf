@@ -234,7 +234,7 @@ resource "aws_api_gateway_deployment" "api_deployment" {
   ]
 
   rest_api_id = aws_api_gateway_rest_api.api.id
-  description = "API Scraper Deployment 16/08/2024"
+  description = "API Scraper Deployment 17/08/2024"
 }
 
 resource "aws_api_gateway_stage" "api_stage" {
