@@ -1,15 +1,12 @@
 resource "aws_dynamodb_table" "products_table" {
   name         = "Products"
-  billing_mode = "PROVISIONED"
+  billing_mode = "PAY_PER_REQUEST"
   hash_key     = "ProductID"
 
   attribute {
     name = "ProductID"
     type = "S"
   }
-
-  write_capacity = 10
-  read_capacity  = 10
 }
 
 resource "aws_dynamodb_table" "users_table" {
