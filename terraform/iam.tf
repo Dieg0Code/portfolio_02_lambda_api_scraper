@@ -57,6 +57,11 @@ resource "aws_iam_policy" "lambda_users_policy" {
         ]
         Effect   = "Allow"
         Resource = aws_dynamodb_table.users_table.arn
+      },
+      {
+        Action = "dynamodb:Query"
+        Effect = "Allow"
+        Resource = "${aws_dynamodb_table.users_table.arn}/index/EmailIndex"
       }
     ]
   })
