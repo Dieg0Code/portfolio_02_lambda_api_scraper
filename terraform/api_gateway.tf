@@ -234,8 +234,25 @@ resource "aws_api_gateway_deployment" "api_deployment" {
   ]
 
   rest_api_id = aws_api_gateway_rest_api.api.id
-  description = "API Scraper Deployment 17/08/2024"
+  description = "API Scraper Deployment"
+
+  triggers = {
+    redeployment = sha1(jsonencode([
+      aws_api_gateway_integration.products_lambda_integration.id,
+      aws_api_gateway_integration.product_lambda_integration.id,
+      aws_api_gateway_integration.post_products_lambda_integration.id,
+      aws_api_gateway_integration.users_lambda_integration.id,
+      aws_api_gateway_integration.user_lambda_integration.id,
+      aws_api_gateway_integration.post_users_lambda_integration.id,
+      aws_api_gateway_integration.post_users_login_lambda_integration.id
+    ]))
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
+
 
 resource "aws_api_gateway_stage" "api_stage" {
   deployment_id = aws_api_gateway_deployment.api_deployment.id
