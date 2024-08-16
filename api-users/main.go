@@ -31,9 +31,10 @@ func init() {
 
 	validator := validator.New()
 	passwordHaher := utils.NewPasswordHasher()
+	jwtUtils := utils.NewJWTUtils()
 
 	// Instance Service
-	userService := services.NewUserServiceImpl(userRepo, validator, passwordHaher)
+	userService := services.NewUserServiceImpl(userRepo, validator, passwordHaher, jwtUtils)
 
 	// Instance controller
 	userController := controllers.NewUserControllerImpl(userService)

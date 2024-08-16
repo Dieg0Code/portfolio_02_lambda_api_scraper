@@ -10,4 +10,5 @@ type UserService interface {
 	RegisterUser(createUserReq request.CreateUserRequest) (models.User, error)
 	GetAllUsers() ([]response.UserResponse, error)
 	GetUserByID(id string) (response.UserResponse, error)
+	LogInUser(logInUserReq request.LogInUserRequest) (response.LogInUserResponse, error)
 }

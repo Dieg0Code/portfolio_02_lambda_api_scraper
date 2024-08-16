@@ -6,4 +6,5 @@ type UserRepository interface {
 	GetAll() ([]models.User, error)
 	GetByID(id string) (models.User, error)
 	Create(user models.User) (models.User, error)
+	GetByEmail(email string) (models.User, error)
 }

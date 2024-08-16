@@ -23,7 +23,7 @@ resource "aws_lambda_function" "scraper" {
   handler       = "bootstrap"
   runtime       = "provided.al2023"
   memory_size   = 128
-  timeout       = 150
+  timeout       = 240
 
   source_code_hash = filebase64sha256("scraper_lambda.zip")
 
@@ -50,4 +50,17 @@ resource "aws_lambda_function" "api_users" {
       TABLE_NAME = aws_dynamodb_table.users_table.name
     }
   }
+}
+
+resource "aws_lambda_function" "authorizer" {
+  filename      = "authorizer_lambda.zip"
+  function_name = "authorizer"
+  role          = aws_iam_role.lambda_role.arn
+  handler       = "bootstrap"
+  runtime       = "provided.al2023"
+  memory_size   = 128
+  timeout       = 90
+
+  source_code_hash = filebase64sha256("authorizer_lambda.zip")
+  
 }

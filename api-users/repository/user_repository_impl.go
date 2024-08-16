@@ -16,6 +16,39 @@ type UserRepositoryImpl struct {
 	tableName string
 }
 
+// GetByEmail implements UserRepository.
+func (u *UserRepositoryImpl) GetByEmail(email string) (models.User, error) {
+	input := &dynamodb.QueryInput{
+		TableName:              &u.tableName,
+		IndexName:              aws.String("EmailIndex"),
+		KeyConditionExpression: aws.String("Email = :email"),
+		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+			":email": {
+				S: aws.String(email),
+			},
+		},
+	}
+
+	result, err := u.db.Query(input)
+	if err != nil {
+		logrus.WithError(err).Error("[UserRepositoryImpl.GetByEmail] error getting user")
+		return models.User{}, errors.New("error getting user")
+	}
+
+	if len(result.Items) == 0 {
+		return models.User{}, errors.New("user not found")
+	}
+
+	var user models.User
+	err = dynamodbattribute.UnmarshalMap(result.Items[0], &user)
+	if err != nil {
+		logrus.WithError(err).Error("[UserRepositoryImpl.GetByEmail] error unmarshalling user")
+		return models.User{}, errors.New("error getting user")
+	}
+
+	return user, nil
+}
+
 // Create implements UserRepository.
 func (u *UserRepositoryImpl) Create(user models.User) (models.User, error) {
 	input := &dynamodb.PutItemInput{

@@ -45,6 +45,13 @@ resource "aws_api_gateway_resource" "user" {
   path_part   = "{userId}"
 }
 
+# Resource for API Gateway /api/v1/users/login endpoint
+resource "aws_api_gateway_resource" "user_login" {
+  rest_api_id = aws_api_gateway_rest_api.api.id
+  parent_id   = aws_api_gateway_resource.users.id
+  path_part   = "login"
+}
+
 # Method for GET /api/v1/products endpoint
 resource "aws_api_gateway_method" "get_products" {
   rest_api_id   = aws_api_gateway_rest_api.api.id
@@ -61,12 +68,22 @@ resource "aws_api_gateway_method" "get_product" {
   authorization = "NONE"
 }
 
+# Authorizer for API Gateway
+resource "aws_api_gateway_authorizer" "jwt_authorizer" {
+  rest_api_id = aws_api_gateway_rest_api.api.id
+  name        = "jwt_authorizer"
+  type        = "TOKEN"
+  authorizer_uri = aws_lambda_function.authorizer.invoke_arn
+  identity_source = "method.request.header.Authorization"
+}
+
 # Method for POST /api/v1/products endpoint
 resource "aws_api_gateway_method" "post_products" {
   rest_api_id   = aws_api_gateway_rest_api.api.id
   resource_id   = aws_api_gateway_resource.products.id
   http_method   = "POST"
-  authorization = "NONE"
+  authorization = "CUSTOM"
+  authorizer_id = aws_api_gateway_authorizer.jwt_authorizer.id
 }
 
 # Method for GET /api/v1/users endpoint
@@ -79,17 +96,25 @@ resource "aws_api_gateway_method" "get_users" {
 
 # Method for GET /api/v1/users/{userId} endpoint
 resource "aws_api_gateway_method" "get_user" {
-  rest_api_id = aws_api_gateway_rest_api.api.id
-  resource_id = aws_api_gateway_resource.user.id
-  http_method = "GET"
+  rest_api_id   = aws_api_gateway_rest_api.api.id
+  resource_id   = aws_api_gateway_resource.user.id
+  http_method   = "GET"
   authorization = "NONE"
 }
 
 # Method for POST /api/v1/users endpoint
 resource "aws_api_gateway_method" "post_users" {
-  rest_api_id = aws_api_gateway_rest_api.api.id
-  resource_id = aws_api_gateway_resource.users.id
-  http_method = "POST"
+  rest_api_id   = aws_api_gateway_rest_api.api.id
+  resource_id   = aws_api_gateway_resource.users.id
+  http_method   = "POST"
+  authorization = "NONE"
+}
+
+# Method for POST /api/v1/users/login endpoint
+resource "aws_api_gateway_method" "post_users_login" {
+  rest_api_id   = aws_api_gateway_rest_api.api.id
+  resource_id   = aws_api_gateway_resource.user_login.id
+  http_method   = "POST"
   authorization = "NONE"
 }
 
@@ -159,6 +184,17 @@ resource "aws_api_gateway_integration" "post_users_lambda_integration" {
   uri                     = aws_lambda_function.api_users.invoke_arn
 }
 
+# Integration for POST /api/v1/users/login endpoint
+resource "aws_api_gateway_integration" "post_users_login_lambda_integration" {
+  rest_api_id = aws_api_gateway_rest_api.api.id
+  resource_id = aws_api_gateway_resource.user_login.id
+  http_method = aws_api_gateway_method.post_users_login.http_method
+
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.api_users.invoke_arn
+}
+
 # Invoke permission for API Gateway to invoke Lambda - Products
 resource "aws_lambda_permission" "api_gateway" {
   statement_id  = "AllowAPIGatewayInvoke"
@@ -177,6 +213,15 @@ resource "aws_lambda_permission" "api_gateway_users" {
   source_arn    = "${aws_api_gateway_rest_api.api.execution_arn}/*/*"
 }
 
+# Invoke permission for API Gateway to invoke Lambda - Authorizer
+resource "aws_lambda_permission" "api_gateway_authorizer" {
+  statement_id  = "AllowAPIGatewayInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.authorizer.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_api_gateway_rest_api.api.execution_arn}/*/*"
+}
+
 resource "aws_api_gateway_deployment" "api_deployment" {
   depends_on = [
     aws_api_gateway_integration.products_lambda_integration,
@@ -184,10 +229,12 @@ resource "aws_api_gateway_deployment" "api_deployment" {
     aws_api_gateway_integration.post_products_lambda_integration,
     aws_api_gateway_integration.users_lambda_integration,
     aws_api_gateway_integration.user_lambda_integration,
-    aws_api_gateway_integration.post_users_lambda_integration
+    aws_api_gateway_integration.post_users_lambda_integration,
+    aws_api_gateway_integration.post_users_login_lambda_integration
   ]
 
   rest_api_id = aws_api_gateway_rest_api.api.id
+  description = "API Scraper Deployment 16/08/2024"
 }
 
 resource "aws_api_gateway_stage" "api_stage" {
@@ -198,7 +245,7 @@ resource "aws_api_gateway_stage" "api_stage" {
   depends_on = [
     aws_api_gateway_deployment.api_deployment
   ]
-  
+
 }
 
 output "api_gateway_invoke_url" {

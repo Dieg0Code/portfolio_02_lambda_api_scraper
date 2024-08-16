@@ -14,6 +14,49 @@ type UserControllerImpl struct {
 	userService services.UserService
 }
 
+// LogInUser implements UserController.
+func (u *UserControllerImpl) LogInUser(c *gin.Context) {
+	loginRequest := request.LogInUserRequest{}
+
+	err := c.ShouldBindJSON(&loginRequest)
+	if err != nil {
+		logrus.WithError(err).Error("[UserControllerImpl.LogInUser] Error binding JSON")
+		errorResponse := response.BaseResponse{
+			Code:    400,
+			Status:  "error",
+			Message: "Invalid request body",
+			Data:    nil,
+		}
+
+		c.JSON(400, errorResponse)
+		return
+	}
+
+	loginResponse, err := u.userService.LogInUser(loginRequest)
+	if err != nil {
+		logrus.WithError(err).Error("[UserControllerImpl.LogInUser] Error logging in user")
+		errorResponse := response.BaseResponse{
+			Code:    500,
+			Status:  "error",
+			Message: "Error logging in user",
+			Data:    nil,
+		}
+
+		c.JSON(500, errorResponse)
+		return
+	}
+
+	c.Header("Authorization", fmt.Sprintf("Bearer %s", loginResponse.Token))
+	webResponse := response.BaseResponse{
+		Code:    200,
+		Status:  "success",
+		Message: "User logged in successfully",
+		Data:    loginResponse,
+	}
+
+	c.JSON(200, webResponse)
+}
+
 // GetAllUsers implements UserController.
 func (u *UserControllerImpl) GetAllUsers(c *gin.Context) {
 	users, err := u.userService.GetAllUsers()

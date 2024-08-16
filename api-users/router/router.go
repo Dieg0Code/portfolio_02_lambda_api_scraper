@@ -38,6 +38,7 @@ func (r *Router) InitRoutes() *Router {
 			userRoute.GET("", r.UserController.GetAllUsers)
 			userRoute.GET("/:userID", r.UserController.GetUserByID)
 			userRoute.POST("", r.UserController.RegisterUser)
+			userRoute.POST("/login", r.UserController.LogInUser)
 		}
 	}
 

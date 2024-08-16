@@ -17,6 +17,46 @@ type UserServiceImpl struct {
 	UserRepository repository.UserRepository
 	Validator      *validator.Validate
 	PasswordHasher utils.PasswordHasher
+	JWTUtils       utils.JWTUtils
+}
+
+// LogInUser implements UserService.
+func (u *UserServiceImpl) LogInUser(logInUserReq request.LogInUserRequest) (response.LogInUserResponse, error) {
+	err := u.Validator.Struct(logInUserReq)
+	if err != nil {
+		logrus.WithError(err).Error("[UserServiceImpl.LogInUser] error validating login user request")
+		return response.LogInUserResponse{}, err
+	}
+
+	user, err := u.UserRepository.GetByEmail(logInUserReq.Email)
+	if err != nil {
+		logrus.WithError(err).Error("[UserServiceImpl.LogInUser] error getting user by email")
+		return response.LogInUserResponse{}, err
+	}
+
+	err = u.PasswordHasher.ComparePassword(user.Password, logInUserReq.Password)
+	if err != nil {
+		logrus.WithError(err).Error("[UserServiceImpl.LogInUser] error comparing password")
+		return response.LogInUserResponse{}, errors.New("invalid password")
+	}
+
+	token, err := u.JWTUtils.GenerateToken(user.UserID)
+	if err != nil {
+		logrus.WithError(err).Error("[UserServiceImpl.LogInUser] error generating token")
+		return response.LogInUserResponse{}, err
+	}
+
+	logInUserResponse := response.LogInUserResponse{
+		Token: token,
+	}
+
+	err = u.Validator.Struct(logInUserResponse)
+	if err != nil {
+		logrus.WithError(err).Error("[UserServiceImpl.LogInUser] error validating login user response")
+		return response.LogInUserResponse{}, err
+	}
+
+	return logInUserResponse, nil
 }
 
 // GetAllUsers implements UserService.
@@ -105,10 +145,11 @@ func (u *UserServiceImpl) RegisterUser(createUserReq request.CreateUserRequest) 
 	return user, nil
 }
 
-func NewUserServiceImpl(userRepository repository.UserRepository, validator *validator.Validate, passwordHaher utils.PasswordHasher) UserService {
+func NewUserServiceImpl(userRepository repository.UserRepository, validator *validator.Validate, passwordHaher utils.PasswordHasher, jwtUtils utils.JWTUtils) UserService {
 	return &UserServiceImpl{
 		UserRepository: userRepository,
 		Validator:      validator,
 		PasswordHasher: passwordHaher,
+		JWTUtils:       jwtUtils,
 	}
 }
