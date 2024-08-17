@@ -57,7 +57,7 @@ The api lambda is triggered by an API Gateway and the scraper lambda is triggere
 }
 ```
 
-- `[POST] /api/v1/products` - Update Data (this will take a while, 1 min aprox)
+- `[POST] /api/v1/products` - Update Data needs a token
 
 ```json
 {
@@ -71,6 +71,66 @@ The api lambda is triggered by an API Gateway and the scraper lambda is triggere
     "status": "OK",
     "message": "Success updating data",
     "data": null
+}
+```
+
+- `[POST] /api/v1/users` - Register a user
+
+```json
+{
+    "username": "username",
+    "email": "test@tes.com",
+    "password": "password",
+    "role": "admin"
+}
+```
+
+```json
+{
+    "code": 200,
+    "status": "OK",
+    "message": "Success registering user",
+    "data": "User username created successfully ID: uuid"
+}
+```
+
+- `[POST] /api/v1/users/login` - Login a user
+
+```json
+{
+    "email": "test@test.com",
+    "password": "password"
+}
+```
+
+```json
+{
+    "code": 200,
+    "status": "OK",
+    "message": "Success logging in",
+    "data": "token"
+}
+```
+
+- `[GET] /api/v1/users` - Get all users
+
+```json
+{
+    "code": 200,
+    "status": "OK",
+    "message": "Success getting all users",
+    "data": [
+        {
+            "user_id": "uuid",
+            "username": "username",
+            "email": "test@test.com",
+        },
+        {
+            "user_id": "uuid",
+            "username": "username",
+            "email": "test1@test.com",
+        }
+    ]
 }
 ```
 
@@ -163,14 +223,6 @@ classDiagram
     ProductServiceImpl o-- UpdateDataRequest : uses
     ProductControllerImpl o-- BaseResponse : returns
 
-    %% Conexiones
-    ProductControllerImpl --> ProductServiceImpl : productService
-    ProductServiceImpl --> ProductRepositoryImpl : productRepository
-    ProductRepositoryImpl --> Product : Product
-    ProductServiceImpl --> ProductResponse : ProductResponse
-    ProductServiceImpl --> UpdateDataRequest : UpdateDataRequest
-    ProductControllerImpl --> BaseResponse : BaseResponse
-
 
 ```
 
@@ -240,97 +292,239 @@ classDiagram
 
 ```
 
+## Class Diagram - API Users
+
+```mermaid
+classDiagram
+    direction TB
+
+    %% Interfaces
+    class UserRepository {
+        <<interface>>
+        +GetAll() ([]models.User, error)
+        +GetByID(id string) (models.User, error)
+        +Create(user models.User) (models.User, error)
+        +GetByEmail(email string) (models.User, error)
+    }
+
+    class UserService {
+        <<interface>>
+        +RegisterUser(createUserReq request.CreateUserRequest) (models.User, error)
+        +GetAllUsers() ([]response.UserResponse, error)
+        +GetUserByID(id string) (response.UserResponse, error)
+        +LogInUser(logInUserReq request.LogInUserRequest) (response.LogInUserResponse, error)
+    }
+
+    class UserController {
+        <<interface>>
+        +RegisterUser(c *gin.Context)
+        +GetAllUsers(c *gin.Context)
+        +GetUserByID(c *gin.Context)
+        +LogInUser(c *gin.Context)
+    }
+
+    %% Implementaciones
+    class UserRepositoryImpl {
+        -dynamodbiface.DynamoDBAPI db
+        -string tableName
+        +GetAll() ([]models.User, error)
+        +GetByID(id string) (models.User, error)
+        +Create(user models.User) (models.User, error)
+        +GetByEmail(email string) (models.User, error)
+    }
+
+    class UserServiceImpl {
+        -UserRepository userRepository
+        -*validator.Validate validator
+        -utils.PasswordHasher passwordHasher
+        -utils.JWTUtils jwtUtils
+        +RegisterUser(createUserReq request.CreateUserRequest) (models.User, error)
+        +GetAllUsers() ([]response.UserResponse, error)
+        +GetUserByID(id string) (response.UserResponse, error)
+        +LogInUser(logInUserReq request.LogInUserRequest) (response.LogInUserResponse, error)
+    }
+
+    class UserControllerImpl {
+        -services.UserService userService
+        +RegisterUser(c *gin.Context)
+        +GetAllUsers(c *gin.Context)
+        +GetUserByID(c *gin.Context)
+        +LogInUser(c *gin.Context)
+    }
+
+    %% Clases relacionadas
+    class User {
+        +string UserID
+        +string Username
+        +string Email
+        +string Password
+        +string Role
+    }
+
+    class CreateUserRequest {
+        +string Username
+        +string Email
+        +string Password
+        +string Role
+    }
+
+    class LogInUserRequest {
+        +string Email
+        +string Password
+    }
+
+    class UserResponse {
+        +string UserID
+        +string Username
+        +string Email
+    }
+
+    class LogInUserResponse {
+        +string Token
+    }
+
+    class BaseResponse {
+        +int Code
+        +string Status
+        +string Message
+        +interface Data
+    }
+
+    %% Implementación de Interfaces
+    UserRepositoryImpl ..|> UserRepository : implements
+    UserServiceImpl ..|> UserService : implements
+    UserControllerImpl ..|> UserController : implements
+
+    %% Relaciones entre clases
+    UserResponse <|-- BaseResponse : data
+    LogInUserResponse <|-- BaseResponse : data
+    UserRepositoryImpl o-- User : manages
+    UserServiceImpl o-- UserResponse : returns
+    UserServiceImpl o-- CreateUserRequest : uses
+    UserServiceImpl o-- LogInUserRequest : uses
+    UserControllerImpl o-- BaseResponse : returns
+```
+
+## Class Diagram - Authorizer
+
+```mermaid
+classDiagram
+    direction TB
+
+    %% Interfaces
+    class JWTValidator {
+        <<interface>>
+        +ValidateToken(tokenString string, secret []byte) (jwt.MapClaims, error)
+    }
+
+    class Policy {
+        <<interface>>
+        +GeneratePolicy(principalID, effect, resource string) events.APIGatewayCustomAuthorizerResponse
+    }
+
+    class AuthorizerHandler {
+        <<interface>>
+        +HandleAuthorizer(ctx context.Context, event events.APIGatewayCustomAuthorizerRequest) (events.APIGatewayCustomAuthorizerResponse, error)
+    }
+
+    %% Implementaciones
+    class JWTValidatorImpl {
+        +ValidateToken(tokenString string, secret []byte) (jwt.MapClaims, error)
+    }
+
+    class PolicyImpl {
+        +GeneratePolicy(principalID, effect, resource string) events.APIGatewayCustomAuthorizerResponse
+    }
+
+    class AuthorizerHandlerImpl {
+        -jwtValidator auth.JWTValidator
+        -policy aws.Policy
+        +HandleAuthorizer(ctx context.Context, event events.APIGatewayCustomAuthorizerRequest) (events.APIGatewayCustomAuthorizerResponse, error)
+    }
+
+    %% Implementación de Interfaces
+    JWTValidatorImpl ..|> JWTValidator : implements
+    PolicyImpl ..|> Policy : implements
+    AuthorizerHandlerImpl ..|> AuthorizerHandler : implements
+
+    %% Relaciones entre clases
+    AuthorizerHandlerImpl --> JWTValidatorImpl : uses
+    AuthorizerHandlerImpl --> PolicyImpl : uses
+```
+
 ## Interaction Diagram between Lambdas and DynamoDB
 
 ```mermaid
 sequenceDiagram
     participant User
     participant APIGateway
+    participant AuthorizerLambda as authorizer Lambda
+    participant UserLambda as api_users Lambda
     participant APILambda as api_products Lambda
     participant ScraperLambda as Scraper Lambda
     participant DynamoDB
 
-    User->>APIGateway: Request (GetAll/GetByID)
-    APIGateway->>APILambda: Invoke Lambda
-    APILambda->>DynamoDB: Query Products
-    DynamoDB-->>APILambda: Return Products
-    APILambda-->>APIGateway: Respond with Products
-    APIGateway-->>User: Return Response
 
-    User->>APIGateway: Request (POST /api/v1/products)
+    %% Register User request - response
+    User->>APIGateway: Request (Register) [POST] /api/v1/users
+    APIGateway->>UserLambda: Invoke Lambda
+    UserLambda->>DynamoDB: Register User
+    DynamoDB-->>UserLambda: Return Success
+    UserLambda-->>APIGateway: Respond with Success
+    APIGateway-->>User: User Created successfully
+
+    %% Login User request - response
+    User->>APIGateway: Request (Login) [POST] /api/v1/users/login
+    APIGateway->>UserLambda: Invoke Lambda
+    UserLambda->>DynamoDB: GetUserByEmail(email)
+    DynamoDB-->>UserLambda: Return User
+    UserLambda-->>APIGateway: Respond with Token
+    APIGateway-->>User: Return Token
+
+    %% Update Product List request - response
+    User->>APIGateway: Request (Update Product List) [POST] /api/v1/products : Token
+    APIGateway->>AuthorizerLambda: Validate Token
+    AuthorizerLambda->>APIGateway: Return Success
     APIGateway->>APILambda: Invoke Lambda
     APILambda->>ScraperLambda: Trigger Scraper Lambda
     ScraperLambda->>SupermarketWebpage: Scrape Data
     ScraperLambda->>DynamoDB: Update Products
+    AuthorizerLambda-->>APIGateway: Return Success
     ScraperLambda-->>APILambda: Return Success
     APILambda-->>APIGateway: Respond with Success
-    APIGateway-->>User: Return Response
-```
+    APIGateway-->>User: Return Scraper Started Successfully
+    
+    %% Get All Products request - response
+    User->>APIGateway: Request (Get all products) [GET] /api/v1/products
+    APIGateway->>APILambda: Invoke Lambda
+    APILambda->>DynamoDB: Query Products
+    DynamoDB-->>APILambda: Return Products
+    APILambda-->>APIGateway: Respond with Products
+    APIGateway-->>User: List of Products
 
-## Terraform Infrastructure
+    %% Get Product by ID request - response
+    User->>APIGateway: Request (Get product by ID) [GET] /api/v1/products/{ProductID}
+    APIGateway->>APILambda: Invoke Lambda
+    APILambda->>DynamoDB: Get Product by ID
+    DynamoDB-->>APILambda: Return Product
+    APILambda-->>APIGateway: Respond with Product
+    APIGateway-->>User: Return Product
 
-```mermaid
-graph TD
-    %% Subgraph for S3 and DynamoDB, which are part of Terraform backend
-    subgraph "Terraform State Management"
-        s3_bucket[S3 Bucket - terraform-state-api-scraper]
-        dynamodb_table_locks[DynamoDB Table - terraform_locks]
-    end
+    %% Get All Users request - response
+    User->>APIGateway: Request (Get all users) [GET] /api/v1/users
+    APIGateway->>UserLambda: Invoke Lambda
+    UserLambda->>DynamoDB: Get All Users
+    DynamoDB-->>UserLambda: Return Users
+    UserLambda-->>APIGateway: Respond with Users
+    APIGateway-->>User: Return Users
 
-    %% Subgraph for IAM roles and policies
-    subgraph "IAM Roles and Policies"
-        iam_role[Lambda IAM Role - lambda_role]
-        lambda_policy[Lambda Policy - lambda_policy]
-        invoke_policy[Invoke Policy - lambda_invoke_policy]
-        basic_exec_role[AWSLambdaBasicExecutionRole]
-
-        %% Attachments
-        iam_role --> lambda_policy
-        iam_role --> invoke_policy
-        iam_role --> basic_exec_role
-    end
-
-    %% Subgraph for Lambda functions
-    subgraph "Lambda Functions"
-        lambda_api_products[Lambda - api_products]
-        lambda_scraper[Lambda - scraper]
-    end
-
-    %% Subgraph for API Gateway
-    subgraph "API Gateway"
-        api_gateway[API Gateway - api_scraper]
-        api_resource[Resource - /api/v1/products]
-        get_method[GET /api/v1/products]
-        post_method[POST /api/v1/products]
-
-        %% Methods and resources association
-        api_resource --> get_method
-        api_resource --> post_method
-    end
-
-    %% DynamoDB Table for Products
-    dynamodb_table[(DynamoDB Table - Products)]
-
-    %% Relationships between resources
-    s3_bucket --> terraform_backend
-    dynamodb_table_locks --> terraform_backend
-
-    dynamodb_table --> lambda_api_products
-    dynamodb_table --> lambda_scraper
-
-    iam_role --> lambda_api_products
-    iam_role --> lambda_scraper
-
-    lambda_api_products --> api_gateway
-    lambda_scraper --> lambda_api_products
-
-    api_gateway --> api_resource
-    api_resource --> get_method
-    api_resource --> post_method
-
-    get_method --> lambda_api_products
-    post_method --> lambda_api_products
-
+    %% Get User by ID request - response
+    User->>APIGateway: Request (Get user by ID) [GET] /api/v1/users/{UserID}
+    APIGateway->>UserLambda: Invoke Lambda
+    UserLambda->>DynamoDB: Get User by ID
+    DynamoDB-->>UserLambda: Return User
+    UserLambda-->>APIGateway: Respond with User
+    APIGateway-->>User: Return User
 ```
 
 ## CI/CD Pipeline
@@ -339,7 +533,7 @@ graph TD
 graph TD
     A[Push to main branch] -->|Trigger| B[CI/CD Pipeline]
     B --> C[Test and Build API]
-    B --> D[Test and Build Scraper]
+    B --> F[Test and Build API Users]
     
     subgraph "Test and Build API"
     C --> C1[Checkout code]
@@ -354,6 +548,8 @@ graph TD
     C9 --> C10[Zip API binary]
     C10 --> C11[Upload API artifact]
     end
+
+    C11 -->|Trigger| D[Test and Build Scraper]
     
     subgraph "Test and Build Scraper"
     D --> D1[Checkout code]
@@ -367,17 +563,47 @@ graph TD
     D8 --> D9[Zip Scraper binary]
     D9 --> D10[Upload Scraper artifact]
     end
+
+    subgraph "Test and Build API Users"
+    F --> F1[Checkout code]
+    F1 --> F2[Set up Go]
+    F2 --> F3[Cache dependencies]
+    F3 --> F4[Install dependencies]
+    F4 --> F5[Run golangci-lint]
+    F5 --> F6[Run tests]
+    F6 --> F7[Upload coverage to codecov]
+    F7 --> F8[Build API Users binary]
+    F8 --> F9[Zip API Users binary]
+    F9 --> F10[Upload API Users artifact]
+    end
+
+    F10 -->|Trigger| G[Test and Build Authorizer]
+
+    subgraph "Test and Build Authorizer"
+    G --> G1[Checkout code]
+    G1 --> G2[Set up Go]
+    G2 --> G3[Cache dependencies]
+    G3 --> G4[Install dependencies]
+    G4 --> G5[Run golangci-lint]
+    G5 --> G6[Run tests]
+    G6 --> G7[Upload coverage to codecov]
+    G7 --> G8[Build Authorizer binary]
+    G8 --> G9[Zip Authorizer binary]
+    G9 --> G10[Upload Authorizer artifact]
+    end
     
-    C11 --> E[Deploy]
-    D10 --> E
+    D10 -->|Trigger| E[Deploy]
+    G10 -->|Trigger| E[Deploy]
     
     subgraph "Deploy"
     E --> E1[Checkout code]
     E1 --> E2[Download API artifact]
     E2 --> E3[Download Scraper artifact]
-    E3 --> E4[Set up Terraform]
-    E4 --> E5[Initialize Terraform]
-    E5 --> E6[Plan Terraform]
-    E6 --> E7[Apply Terraform]
+    E3 --> E4[Download API Users artifact]
+    E4 --> E5[Download Authorizer artifact]
+    E5 --> E6[Set up Terraform]
+    E6 --> E7[Initialize Terraform]
+    E7 --> E8[Plan Terraform]
+    E8 --> E9[Apply Terraform]
     end
 ```

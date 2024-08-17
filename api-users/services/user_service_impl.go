@@ -14,33 +14,33 @@ import (
 )
 
 type UserServiceImpl struct {
-	UserRepository repository.UserRepository
-	Validator      *validator.Validate
-	PasswordHasher utils.PasswordHasher
-	JWTUtils       utils.JWTUtils
+	userRepository repository.UserRepository
+	validator      *validator.Validate
+	passwordHasher utils.PasswordHasher
+	jwtUtils       utils.JWTUtils
 }
 
 // LogInUser implements UserService.
 func (u *UserServiceImpl) LogInUser(logInUserReq request.LogInUserRequest) (response.LogInUserResponse, error) {
-	err := u.Validator.Struct(logInUserReq)
+	err := u.validator.Struct(logInUserReq)
 	if err != nil {
 		logrus.WithError(err).Error("[UserServiceImpl.LogInUser] error validating login user request")
 		return response.LogInUserResponse{}, err
 	}
 
-	user, err := u.UserRepository.GetByEmail(logInUserReq.Email)
+	user, err := u.userRepository.GetByEmail(logInUserReq.Email)
 	if err != nil {
 		logrus.WithError(err).Error("[UserServiceImpl.LogInUser] error getting user by email")
 		return response.LogInUserResponse{}, err
 	}
 
-	err = u.PasswordHasher.ComparePassword(user.Password, logInUserReq.Password)
+	err = u.passwordHasher.ComparePassword(user.Password, logInUserReq.Password)
 	if err != nil {
 		logrus.WithError(err).Error("[UserServiceImpl.LogInUser] error comparing password")
 		return response.LogInUserResponse{}, errors.New("invalid password")
 	}
 
-	token, err := u.JWTUtils.GenerateToken(user.UserID)
+	token, err := u.jwtUtils.GenerateToken(user.UserID)
 	if err != nil {
 		logrus.WithError(err).Error("[UserServiceImpl.LogInUser] error generating token")
 		return response.LogInUserResponse{}, err
@@ -50,7 +50,7 @@ func (u *UserServiceImpl) LogInUser(logInUserReq request.LogInUserRequest) (resp
 		Token: token,
 	}
 
-	err = u.Validator.Struct(logInUserResponse)
+	err = u.validator.Struct(logInUserResponse)
 	if err != nil {
 		logrus.WithError(err).Error("[UserServiceImpl.LogInUser] error validating login user response")
 		return response.LogInUserResponse{}, err
@@ -61,7 +61,7 @@ func (u *UserServiceImpl) LogInUser(logInUserReq request.LogInUserRequest) (resp
 
 // GetAllUsers implements UserService.
 func (u *UserServiceImpl) GetAllUsers() ([]response.UserResponse, error) {
-	users, err := u.UserRepository.GetAll()
+	users, err := u.userRepository.GetAll()
 	if err != nil {
 		logrus.WithError(err).Error("[UserServiceImpl.GetAllUsers] error getting all users")
 		return nil, err
@@ -75,7 +75,7 @@ func (u *UserServiceImpl) GetAllUsers() ([]response.UserResponse, error) {
 			Email:    user.Email,
 		}
 
-		err := u.Validator.Struct(userResponse)
+		err := u.validator.Struct(userResponse)
 		if err != nil {
 			logrus.WithError(err).Error("[UserServiceImpl.GetAllUsers] error validating user response")
 			return nil, err
@@ -93,7 +93,7 @@ func (u *UserServiceImpl) GetUserByID(id string) (response.UserResponse, error) 
 		return response.UserResponse{}, errors.New("id is required")
 	}
 
-	user, err := u.UserRepository.GetByID(id)
+	user, err := u.userRepository.GetByID(id)
 	if err != nil {
 		logrus.WithError(err).Error("[UserServiceImpl.GetUserByID] error getting user by ID")
 		return response.UserResponse{}, err
@@ -105,7 +105,7 @@ func (u *UserServiceImpl) GetUserByID(id string) (response.UserResponse, error) 
 		Email:    user.Email,
 	}
 
-	err = u.Validator.Struct(userResponse)
+	err = u.validator.Struct(userResponse)
 	if err != nil {
 		logrus.WithError(err).Error("[UserServiceImpl.GetUserByID] error validating user response")
 		return response.UserResponse{}, err
@@ -116,13 +116,13 @@ func (u *UserServiceImpl) GetUserByID(id string) (response.UserResponse, error) 
 
 // RegisterUser implements UserService.
 func (u *UserServiceImpl) RegisterUser(createUserReq request.CreateUserRequest) (models.User, error) {
-	err := u.Validator.Struct(createUserReq)
+	err := u.validator.Struct(createUserReq)
 	if err != nil {
 		logrus.WithError(err).Error("[UserServiceImpl.RegisterUser] error validating create user request")
 		return models.User{}, err
 	}
 
-	hashedPassword, err := u.PasswordHasher.HashPassword(createUserReq.Password)
+	hashedPassword, err := u.passwordHasher.HashPassword(createUserReq.Password)
 	if err != nil {
 		logrus.WithError(err).Error("[UserServiceImpl.RegisterUser] error hashing password")
 		return models.User{}, err
@@ -136,7 +136,7 @@ func (u *UserServiceImpl) RegisterUser(createUserReq request.CreateUserRequest) 
 		Role:     createUserReq.Role,
 	}
 
-	user, err := u.UserRepository.Create(userModel)
+	user, err := u.userRepository.Create(userModel)
 	if err != nil {
 		logrus.WithError(err).Error("[UserServiceImpl.RegisterUser] error creating user")
 		return models.User{}, err
@@ -147,9 +147,9 @@ func (u *UserServiceImpl) RegisterUser(createUserReq request.CreateUserRequest) 
 
 func NewUserServiceImpl(userRepository repository.UserRepository, validator *validator.Validate, passwordHaher utils.PasswordHasher, jwtUtils utils.JWTUtils) UserService {
 	return &UserServiceImpl{
-		UserRepository: userRepository,
-		Validator:      validator,
-		PasswordHasher: passwordHaher,
-		JWTUtils:       jwtUtils,
+		userRepository: userRepository,
+		validator:      validator,
+		passwordHasher: passwordHaher,
+		jwtUtils:       jwtUtils,
 	}
 }
