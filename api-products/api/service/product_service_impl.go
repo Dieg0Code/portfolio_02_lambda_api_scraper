@@ -30,6 +30,7 @@ func (p *ProductServiceImpl) GetAll() ([]response.ProductResponse, error) {
 			Category:        product.Category,
 			DiscountedPrice: product.DiscountedPrice,
 			OriginalPrice:   product.OriginalPrice,
+			LastUpdated:     product.LastUpdated,
 		}
 
 		products = append(products, productResponse)

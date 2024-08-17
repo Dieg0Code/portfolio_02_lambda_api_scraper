@@ -6,4 +6,5 @@ type ProductResponse struct {
 	Category        string `json:"category"`
 	OriginalPrice   int    `json:"original_price"`
 	DiscountedPrice int    `json:"discounted_price"`
+	LastUpdated     string `json:"last_updated"`
 }
