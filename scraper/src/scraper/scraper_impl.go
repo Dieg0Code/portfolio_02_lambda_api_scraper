@@ -16,36 +16,32 @@ type ScraperImpl struct {
 }
 
 // CleanPrice implements Scraper.
-// CleanPrice implements Scraper.
 func (s *ScraperImpl) CleanPrice(price string) ([]int, error) {
 	cleaned := strings.ReplaceAll(price, "$", "")
 	cleaned = strings.ReplaceAll(cleaned, ".", "")
-	cleaned = strings.TrimSpace(cleaned) // Limpieza adicional
+	cleaned = strings.TrimSpace(cleaned)
 
-	if strings.Contains(cleaned, "\u2013") {
-		priceParts := strings.Split(cleaned, "\u2013")
+	if strings.Contains(cleaned, "–") {
+		priceParts := strings.Split(cleaned, "–")
 		var prices []int
 		for _, part := range priceParts {
 			part = strings.TrimSpace(part)
-			if part == "" {
-				logrus.WithError(errors.New("empty price part")).Error("empty price part")
-				return nil, errors.New("empty price part")
-			}
 			price, err := strconv.Atoi(part)
 			if err != nil {
-				logrus.WithError(err).Error("error converting price to int")
-				return nil, errors.New("error converting price to int")
+				logrus.WithError(err).Errorf("error converting price to int: %s", part)
+				continue // Skip this part instead of returning an error
 			}
-
 			prices = append(prices, price)
 		}
-
+		if len(prices) == 0 {
+			return nil, errors.New("no valid prices found")
+		}
 		return prices, nil
 	}
 
 	priceInt, err := strconv.Atoi(cleaned)
 	if err != nil {
-		logrus.WithError(err).Error("error converting price to int")
+		logrus.WithError(err).Errorf("error converting price to int: %s", cleaned)
 		return nil, errors.New("error converting price to int")
 	}
 
