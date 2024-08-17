@@ -3,6 +3,7 @@ package scraper
 import (
 	"errors"
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -17,35 +18,30 @@ type ScraperImpl struct {
 
 // CleanPrice implements Scraper.
 func (s *ScraperImpl) CleanPrice(price string) ([]int, error) {
-	cleaned := strings.ReplaceAll(price, "$", "")
-	cleaned = strings.ReplaceAll(cleaned, ".", "")
-	cleaned = strings.TrimSpace(cleaned)
+	// Expresión regular que captura secuencias de números (con o sin separadores de miles)
+	re := regexp.MustCompile(`\d{1,3}(?:\.\d{3})*`)
 
-	if strings.Contains(cleaned, "–") {
-		priceParts := strings.Split(cleaned, "–")
-		var prices []int
-		for _, part := range priceParts {
-			part = strings.TrimSpace(part)
-			price, err := strconv.Atoi(part)
-			if err != nil {
-				logrus.WithError(err).Errorf("error converting price to int: %s", part)
-				continue // Skip this part instead of returning an error
-			}
-			prices = append(prices, price)
-		}
-		if len(prices) == 0 {
-			return nil, errors.New("no valid prices found")
-		}
-		return prices, nil
+	// Encontrar todas las coincidencias
+	matches := re.FindAllString(price, -1)
+	if len(matches) == 0 {
+		logrus.Error("no prices found in string")
+		return nil, errors.New("no prices found in string")
 	}
 
-	priceInt, err := strconv.Atoi(cleaned)
-	if err != nil {
-		logrus.WithError(err).Errorf("error converting price to int: %s", cleaned)
-		return nil, errors.New("error converting price to int")
+	var prices []int
+	for _, match := range matches {
+		// Remover los puntos separadores de miles y convertir a entero
+		cleaned := strings.ReplaceAll(match, ".", "")
+		price, err := strconv.Atoi(cleaned)
+		if err != nil {
+			logrus.WithError(err).Error("error converting price to int")
+			return nil, errors.New("error converting price to int")
+		}
+		prices = append(prices, price)
 	}
 
-	return []int{priceInt}, nil
+	// Retornar los precios como un slice de int
+	return prices, nil
 }
 
 // ScrapeData implements Scraper.
