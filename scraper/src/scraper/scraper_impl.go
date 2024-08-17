@@ -1,6 +1,7 @@
 package scraper
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -14,14 +15,37 @@ type ScraperImpl struct {
 	Collector *colly.Collector
 }
 
-// cleanPrice implements Scraper.
-func (s *ScraperImpl) CleanPrice(price string) (int, error) {
-	cleaned := strings.ReplaceAll(price, "$", "")
+// CleanPrice implements Scraper.
+func (s *ScraperImpl) CleanPrice(price string) ([]int, error) {
+	cleaned := strings.ReplaceAll(price, ".", "")
 	cleaned = strings.ReplaceAll(cleaned, ".", "")
-	return strconv.Atoi(cleaned)
+
+	if strings.Contains(cleaned, "-") {
+		priceParts := strings.Split(cleaned, "-")
+		var prices []int
+		for _, part := range priceParts {
+			price, err := strconv.Atoi(strings.TrimSpace(part))
+			if err != nil {
+				logrus.WithError(err).Error("error converting price to int")
+				return nil, errors.New("error converting price to int")
+			}
+
+			prices = append(prices, price)
+		}
+
+		return prices, nil
+	}
+
+	priceInt, err := strconv.Atoi(cleaned)
+	if err != nil {
+		logrus.WithError(err).Error("error converting price to int")
+		return nil, errors.New("error converting price to int")
+	}
+
+	return []int{priceInt}, nil
 }
 
-// scrapeData implements Scraper.
+// ScrapeData implements Scraper.
 func (s *ScraperImpl) ScrapeData(baseURL string, maxPage int, category string) ([]models.Product, error) {
 	var products []models.Product
 
@@ -35,22 +59,32 @@ func (s *ScraperImpl) ScrapeData(baseURL string, maxPage int, category string) (
 			originalPriceStr = e.ChildText(".price .woocommerce-Price-amount.amount")
 		}
 
-		originalPrice, err := s.CleanPrice(originalPriceStr)
-		if err != nil {
-			originalPrice = 0
+		// Limpiar precios originales
+		originalPrices, err := s.CleanPrice(originalPriceStr)
+		if err != nil || len(originalPrices) == 0 {
+			logrus.WithError(err).Error("error cleaning original price")
+			originalPrices = []int{0}
 		}
 
-		discountPrice, err := s.CleanPrice(discountPriceStr)
-		if err != nil {
-			discountPrice = 0
+		// Limpiar precios con descuento
+		discountPrices, err := s.CleanPrice(discountPriceStr)
+		if err != nil || len(discountPrices) == 0 {
+			logrus.WithError(err).Error("error cleaning discount price")
+			discountPrices = []int{0}
 		}
 
-		products = append(products, models.Product{
-			Name:            name,
-			Category:        category,
-			OriginalPrice:   originalPrice,
-			DiscountedPrice: discountPrice,
-		})
+		// Crear una entrada por cada precio original
+		for _, originalPrice := range originalPrices {
+			for _, discountPrice := range discountPrices {
+				product := models.Product{
+					Name:            name,
+					Category:        category,
+					OriginalPrice:   originalPrice,
+					DiscountedPrice: discountPrice,
+				}
+				products = append(products, product)
+			}
+		}
 	})
 
 	for i := 1; i <= maxPage; i++ {
@@ -69,7 +103,7 @@ func (s *ScraperImpl) ScrapeData(baseURL string, maxPage int, category string) (
 	return products, nil
 }
 
-func NewScraperImpl(collector *colly.Collector) *ScraperImpl {
+func NewScraperImpl(collector *colly.Collector) Scraper {
 	return &ScraperImpl{
 		Collector: collector,
 	}

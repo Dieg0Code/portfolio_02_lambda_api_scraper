@@ -1,6 +1,8 @@
 package service
 
 import (
+	"time"
+
 	"github.com/dieg0code/scraper/src/repository"
 	"github.com/dieg0code/scraper/src/scraper"
 	"github.com/dieg0code/shared/models"
@@ -38,6 +40,7 @@ func (s *ScraperServiceImpl) GetProducts() (bool, error) {
 				Category:        product.Category,
 				OriginalPrice:   product.OriginalPrice,
 				DiscountedPrice: product.DiscountedPrice,
+				LastUpdated:     time.Now().Format("02-01-2006"),
 			}
 			_, err := s.ScraperRepository.Create(productModel)
 			if err != nil {

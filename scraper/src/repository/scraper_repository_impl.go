@@ -36,6 +36,10 @@ func (s *ScraperRepositoryImpl) Create(product models.Product) (models.Product, 
 			"DiscountedPrice": {
 				N: aws.String(fmt.Sprintf("%d", product.DiscountedPrice)),
 			},
+
+			"LastUpdated": {
+				S: aws.String(product.LastUpdated),
+			},
 		},
 	}
 
