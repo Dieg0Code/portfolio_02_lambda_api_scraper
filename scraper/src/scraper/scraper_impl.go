@@ -16,12 +16,14 @@ type ScraperImpl struct {
 }
 
 // CleanPrice implements Scraper.
+// CleanPrice implements Scraper.
 func (s *ScraperImpl) CleanPrice(price string) ([]int, error) {
 	cleaned := strings.ReplaceAll(price, "$", "")
 	cleaned = strings.ReplaceAll(cleaned, ".", "")
+	cleaned = strings.TrimSpace(cleaned) // Limpieza adicional
 
-	if strings.Contains(cleaned, "-") {
-		priceParts := strings.Split(cleaned, "-")
+	if strings.Contains(cleaned, "\u2013") {
+		priceParts := strings.Split(cleaned, "\u2013")
 		var prices []int
 		for _, part := range priceParts {
 			part = strings.TrimSpace(part)
