@@ -17,14 +17,19 @@ type ScraperImpl struct {
 
 // CleanPrice implements Scraper.
 func (s *ScraperImpl) CleanPrice(price string) ([]int, error) {
-	cleaned := strings.ReplaceAll(price, ".", "")
+	cleaned := strings.ReplaceAll(price, "$", "")
 	cleaned = strings.ReplaceAll(cleaned, ".", "")
 
 	if strings.Contains(cleaned, "-") {
 		priceParts := strings.Split(cleaned, "-")
 		var prices []int
 		for _, part := range priceParts {
-			price, err := strconv.Atoi(strings.TrimSpace(part))
+			part = strings.TrimSpace(part)
+			if part == "" {
+				logrus.WithError(errors.New("empty price part")).Error("empty price part")
+				return nil, errors.New("empty price part")
+			}
+			price, err := strconv.Atoi(part)
 			if err != nil {
 				logrus.WithError(err).Error("error converting price to int")
 				return nil, errors.New("error converting price to int")
