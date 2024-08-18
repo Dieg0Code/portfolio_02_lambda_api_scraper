@@ -18,7 +18,9 @@ type ScraperImpl struct {
 
 // CleanPrice implements Scraper.
 func (s *ScraperImpl) CleanPrice(price string) ([]int, error) {
-	// Expresión regular que captura secuencias de números (con o sin separadores de miles)
+	// Captura numeros entre 1 y 3 digitos d{1,3} seguidos de 0 o más
+	// grupos de 3 digitos (?:\.\d{3})* antesedidos por un punto
+	// EJ: 123.456.789 sería \d{1,3} = 123 y (?:\.\d{3})* = .456.789
 	re := regexp.MustCompile(`\d{1,3}(?:\.\d{3})*`)
 
 	// Encontrar todas las coincidencias
