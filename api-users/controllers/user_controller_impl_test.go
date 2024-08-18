@@ -11,6 +11,7 @@ import (
 	"github.com/dieg0code/shared/json/request"
 	"github.com/dieg0code/shared/json/response"
 	"github.com/dieg0code/shared/mocks"
+	"github.com/dieg0code/shared/models"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -261,4 +262,119 @@ func TestGetUserByID(t *testing.T) {
 
 		userService.AssertExpectations(t)
 	})
+}
+
+func TestRegisterUser(t *testing.T) {
+	t.Run("RegisterUser_Success", func(t *testing.T) {
+		userService := new(mocks.MockUserService)
+		userController := NewUserControllerImpl(userService)
+
+		gin.SetMode(gin.TestMode)
+
+		router := gin.Default()
+
+		router.POST("/users", userController.RegisterUser)
+
+		userService.On("RegisterUser", mock.Anything).Return(models.User{
+			UserID:   "uuid",
+			Username: "test",
+			Email:    "test@test.com",
+			Role:     "user",
+		}, nil)
+
+		registerUserRequest := request.CreateUserRequest{
+			Username: "test",
+			Email:    "test@test.com",
+			Password: "password",
+			Role:     "user",
+		}
+
+		reqBody, err := json.Marshal(registerUserRequest)
+		assert.NoError(t, err, "Expected no error marshalling request body")
+
+		req, err := http.NewRequest(http.MethodPost, "/users", bytes.NewBuffer(reqBody))
+		assert.NoError(t, err, "Expected no error creating request")
+
+		rec := httptest.NewRecorder()
+		router.ServeHTTP(rec, req)
+
+		assert.Equal(t, http.StatusCreated, rec.Code, "Expected status code 201")
+
+		var response response.BaseResponse
+		err = json.Unmarshal(rec.Body.Bytes(), &response)
+		assert.NoError(t, err, "Expected no error unmarshalling response body")
+		assert.Equal(t, "success", response.Status, "Expected response status to be success")
+		assert.Equal(t, "User registered successfully", response.Message, "Expected response message to be 'User registered successfully'")
+		assert.Equal(t, "User test registered successfully ID: uuid", response.Data.(string), "Expected response data to be 'User test registered successfully ID: uuid'")
+
+		userService.AssertExpectations(t)
+	})
+
+	t.Run("RegisterUser_ErrorBindingJSON", func(t *testing.T) {
+		userService := new(mocks.MockUserService)
+		userController := NewUserControllerImpl(userService)
+
+		gin.SetMode(gin.TestMode)
+
+		router := gin.Default()
+
+		router.POST("/users", userController.RegisterUser)
+
+		req, err := http.NewRequest(http.MethodPost, "/users", bytes.NewBuffer([]byte("")))
+		assert.NoError(t, err, "Expected no error creating request")
+
+		rec := httptest.NewRecorder()
+		router.ServeHTTP(rec, req)
+
+		assert.Equal(t, http.StatusBadRequest, rec.Code, "Expected status code 400")
+
+		var response response.BaseResponse
+		err = json.Unmarshal(rec.Body.Bytes(), &response)
+		assert.NoError(t, err, "Expected no error unmarshalling response body")
+		assert.Equal(t, "error", response.Status, "Expected response status to be error")
+		assert.Equal(t, "Invalid request body", response.Message, "Expected response message to be 'Invalid request body'")
+
+		userService.AssertExpectations(t)
+	})
+
+	t.Run("RegisterUser_ErrorRegisteringUser", func(t *testing.T) {
+		userService := new(mocks.MockUserService)
+		userController := NewUserControllerImpl(userService)
+
+		gin.SetMode(gin.TestMode)
+
+		router := gin.Default()
+
+		router.POST("/users", userController.RegisterUser)
+
+		userService.On("RegisterUser", mock.Anything).Return(models.User{}, assert.AnError)
+
+		registerUserRequest := request.CreateUserRequest{
+			Username: "test",
+			Email:    "test@test.com",
+			Password: "password",
+			Role:     "user",
+		}
+
+		reqBody, err := json.Marshal(registerUserRequest)
+		assert.NoError(t, err, "Expected no error marshalling request body")
+
+		req, err := http.NewRequest(http.MethodPost, "/users", bytes.NewBuffer(reqBody))
+		assert.NoError(t, err, "Expected no error creating request")
+
+		rec := httptest.NewRecorder()
+		router.ServeHTTP(rec, req)
+
+		assert.Equal(t, http.StatusInternalServerError, rec.Code, "Expected status code 500")
+
+		var response response.BaseResponse
+		err = json.Unmarshal(rec.Body.Bytes(), &response)
+		assert.NoError(t, err, "Expected no error unmarshalling response body")
+		assert.Equal(t, "error", response.Status, "Expected response status to be error")
+		assert.Equal(t, "Error registering user", response.Message, "Expected response message to be 'Error registering user'")
+		assert.Nil(t, response.Data, "Expected response data to be nil")
+
+		userService.AssertExpectations(t)
+	})
+
 }
