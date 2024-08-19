@@ -74,7 +74,7 @@ func TestScrapeData(t *testing.T) {
 func createTestServer() *httptest.Server {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
-		w.Write([]byte(`
+		_, err := w.Write([]byte(`
 			<div class="product-small box">
 				<div class="name product-title"><a href="#">Test Product</a></div>
 				<div class="category">category</div>
@@ -84,6 +84,8 @@ func createTestServer() *httptest.Server {
 				</div>
 			</div>
 		`))
+
+		assert.NoError(nil, err, "Expected no error writing response")
 	})
 
 	ts := httptest.NewServer(handler)
