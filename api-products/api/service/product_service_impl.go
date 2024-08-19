@@ -2,8 +2,8 @@ package service
 
 import (
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/lambda"
+	"github.com/aws/aws-sdk-go/service/lambda/lambdaiface"
 	"github.com/dieg0code/serverles-api-scraper/api/data/request"
 	"github.com/dieg0code/serverles-api-scraper/api/repository"
 	"github.com/dieg0code/shared/json/response"
@@ -12,6 +12,7 @@ import (
 
 type ProductServiceImpl struct {
 	ProductRepository repository.ProductRepository
+	lambdaClient      lambdaiface.LambdaAPI
 }
 
 // GetAll implements ProductService.
@@ -64,18 +65,6 @@ func (p *ProductServiceImpl) UpdateData(updateData request.UpdateDataRequest) (b
 		return false, nil
 	}
 
-	// Crear una nueva sesión de AWS
-	sess, err := session.NewSession(&aws.Config{
-		Region: aws.String("sa-east-1"), // Reemplaza con tu región de AWS
-	})
-	if err != nil {
-		logrus.WithError(err).Error("[ProductServiceImpl.UpdateData] Error creating AWS session")
-		return false, err
-	}
-
-	// Crear un nuevo cliente Lambda
-	svc := lambda.New(sess)
-
 	// Preparar la entrada para invocar la función Lambda
 	input := &lambda.InvokeInput{
 		FunctionName:   aws.String("scraper"),
@@ -83,7 +72,7 @@ func (p *ProductServiceImpl) UpdateData(updateData request.UpdateDataRequest) (b
 	}
 
 	// Invocar la función Lambda
-	_, err = svc.Invoke(input)
+	_, err := p.lambdaClient.Invoke(input)
 	if err != nil {
 		logrus.WithError(err).Error("[ProductServiceImpl.UpdateData] Error invoking lambda function")
 		return false, err
@@ -92,8 +81,9 @@ func (p *ProductServiceImpl) UpdateData(updateData request.UpdateDataRequest) (b
 	return true, nil
 }
 
-func NewProductServiceImpl(productRepository repository.ProductRepository) ProductService {
+func NewProductServiceImpl(productRepository repository.ProductRepository, lambdaClient lambdaiface.LambdaAPI) ProductService {
 	return &ProductServiceImpl{
 		ProductRepository: productRepository,
+		lambdaClient:      lambdaClient,
 	}
 }

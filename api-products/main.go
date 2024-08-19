@@ -5,6 +5,9 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	lambdaClient "github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/dieg0code/serverles-api-scraper/api/controller"
 	"github.com/dieg0code/serverles-api-scraper/api/repository"
 	"github.com/dieg0code/serverles-api-scraper/api/router"
@@ -27,12 +30,19 @@ func init() {
 	// Instance repository
 	productRepo := repository.NewProductRepositoryImpl(db, tableName)
 
-	//  Instance colly and scraper
-	// collector := colly.NewCollector()
-	// scraper := utils.NewScraperImpl(collector)
+	// Crear una nueva sesión de AWS
+	sess, err := session.NewSession(&aws.Config{
+		Region: aws.String(region),
+	})
+	if err != nil {
+		logrus.WithError(err).Error("[ProductServiceImpl.UpdateData] Error creating AWS session")
+	}
+
+	// Crear un nuevo cliente Lambda
+	lambdaClient := lambdaClient.New(sess)
 
 	// Instance service
-	productService := service.NewProductServiceImpl(productRepo)
+	productService := service.NewProductServiceImpl(productRepo, lambdaClient)
 
 	// Instance controller
 	productController := controller.NewProductControllerImpl(productService)

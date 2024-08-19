@@ -3,16 +3,20 @@ package service
 import (
 	"testing"
 
+	"github.com/aws/aws-sdk-go/service/lambda"
+	"github.com/dieg0code/serverles-api-scraper/api/data/request"
 	"github.com/dieg0code/shared/json/response"
 	"github.com/dieg0code/shared/mocks"
 	"github.com/dieg0code/shared/models"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestPoductService_GetAll(t *testing.T) {
 	t.Run("GetAll_Success", func(t *testing.T) {
 		mockRepo := new(mocks.MockProductRepository)
-		productService := NewProductServiceImpl(mockRepo)
+		mockLambdaClient := new(mocks.MockLambdaClient)
+		productService := NewProductServiceImpl(mockRepo, mockLambdaClient)
 
 		expectedProducts := []response.ProductResponse{
 			{
@@ -58,7 +62,8 @@ func TestPoductService_GetAll(t *testing.T) {
 
 	t.Run("GetAll_Error", func(t *testing.T) {
 		mockRepo := new(mocks.MockProductRepository)
-		productService := NewProductServiceImpl(mockRepo)
+		mockLambdaClient := new(mocks.MockLambdaClient)
+		productService := NewProductServiceImpl(mockRepo, mockLambdaClient)
 
 		mockRepo.On("GetAll").Return([]models.Product{}, assert.AnError)
 
@@ -73,7 +78,8 @@ func TestPoductService_GetAll(t *testing.T) {
 func TestPoductService_GetByID(t *testing.T) {
 	t.Run("GetByID_Success", func(t *testing.T) {
 		mockRepo := new(mocks.MockProductRepository)
-		productService := NewProductServiceImpl(mockRepo)
+		mockLambdaClient := new(mocks.MockLambdaClient)
+		productService := NewProductServiceImpl(mockRepo, mockLambdaClient)
 
 		expectedProduct := response.ProductResponse{
 			ProductID:       "test-id",
@@ -101,7 +107,8 @@ func TestPoductService_GetByID(t *testing.T) {
 
 	t.Run("GetByID_Error", func(t *testing.T) {
 		mockRepo := new(mocks.MockProductRepository)
-		productService := NewProductServiceImpl(mockRepo)
+		mockLambdaClient := new(mocks.MockLambdaClient)
+		productService := NewProductServiceImpl(mockRepo, mockLambdaClient)
 
 		mockRepo.On("GetByID", "test-id").Return(models.Product{}, assert.AnError)
 
@@ -109,5 +116,60 @@ func TestPoductService_GetByID(t *testing.T) {
 
 		assert.Error(t, err, "Expected error Getting product by ID")
 		assert.Equal(t, response.ProductResponse{}, product, "Expected product to be empty")
+	})
+}
+
+func TestPoductService_UpdateData(t *testing.T) {
+	t.Run("UpdateData_Success", func(t *testing.T) {
+		mockRepo := new(mocks.MockProductRepository)
+		mockLambdaClient := new(mocks.MockLambdaClient)
+		productService := NewProductServiceImpl(mockRepo, mockLambdaClient)
+
+		updateReq := request.UpdateDataRequest{
+			UpdateData: true,
+		}
+
+		mockLambdaClient.On("Invoke", mock.Anything).Return(&lambda.InvokeOutput{}, nil)
+
+		success, err := productService.UpdateData(updateReq)
+
+		assert.NoError(t, err, "Expected no error, UpdateData() returned an error")
+		assert.True(t, success, "Expected success to be true")
+
+		mockLambdaClient.AssertExpectations(t)
+	})
+
+	t.Run("UpdateData_InvokeError", func(t *testing.T) {
+		mockRepo := new(mocks.MockProductRepository)
+		mockLambdaClient := new(mocks.MockLambdaClient)
+		productService := NewProductServiceImpl(mockRepo, mockLambdaClient)
+
+		updateReq := request.UpdateDataRequest{
+			UpdateData: true,
+		}
+
+		mockLambdaClient.On("Invoke", mock.Anything).Return(&lambda.InvokeOutput{}, assert.AnError)
+
+		success, err := productService.UpdateData(updateReq)
+
+		assert.Error(t, err, "Expected error invoking lambda function")
+		assert.False(t, success, "Expected success to be false")
+
+		mockLambdaClient.AssertExpectations(t)
+	})
+
+	t.Run("UpdateData_NoUpdate", func(t *testing.T) {
+		mockRepo := new(mocks.MockProductRepository)
+		mockLambdaClient := new(mocks.MockLambdaClient)
+		productService := NewProductServiceImpl(mockRepo, mockLambdaClient)
+
+		updateReq := request.UpdateDataRequest{
+			UpdateData: false,
+		}
+
+		success, err := productService.UpdateData(updateReq)
+
+		assert.NoError(t, err, "Expected no error, UpdateData() returned an error")
+		assert.False(t, success, "Expected success to be false")
 	})
 }
