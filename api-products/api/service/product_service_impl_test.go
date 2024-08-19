@@ -4,119 +4,112 @@ import (
 	"testing"
 
 	"github.com/dieg0code/shared/json/response"
+	"github.com/dieg0code/shared/mocks"
 	"github.com/dieg0code/shared/models"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 )
 
-type MockProductRepository struct {
-	mock.Mock
-}
-
-type MockScraper struct {
-	mock.Mock
-}
-
-func (m *MockProductRepository) GetAll() ([]models.Product, error) {
-	args := m.Called()
-	return args.Get(0).([]models.Product), args.Error(1)
-}
-func (m *MockProductRepository) GetByID(id string) (models.Product, error) {
-	args := m.Called(id)
-	return args.Get(0).(models.Product), args.Error(1)
-}
-func (m *MockProductRepository) Create(product models.Product) (models.Product, error) {
-	args := m.Called(product)
-	return args.Get(0).(models.Product), args.Error(1)
-}
-func (m *MockProductRepository) DeleteAll() error {
-	args := m.Called()
-	return args.Error(0)
-}
-
-func (m *MockScraper) ScrapeData(baseURL string, maxPage int, category string) ([]models.Product, error) {
-	args := m.Called(baseURL, maxPage, category)
-	return args.Get(0).([]models.Product), args.Error(1)
-}
-
-func (m *MockScraper) CleanPrice(price string) (int, error) {
-	args := m.Called(price)
-	return args.Int(0), args.Error(1)
-}
-
 func TestPoductService_GetAll(t *testing.T) {
-	mockRepo := new(MockProductRepository)
-	productService := NewProductServiceImpl(mockRepo)
+	t.Run("GetAll_Success", func(t *testing.T) {
+		mockRepo := new(mocks.MockProductRepository)
+		productService := NewProductServiceImpl(mockRepo)
 
-	expectedProducts := []response.ProductResponse{
-		{
-			ProductID:       "test-id",
-			Name:            "Test Product",
-			Category:        "Test Category",
-			OriginalPrice:   100,
-			DiscountedPrice: 90,
-		},
-		{
-			ProductID:       "test-id-2",
-			Name:            "Test Product 2",
-			Category:        "Test Category 2",
-			OriginalPrice:   200,
-			DiscountedPrice: 190,
-		},
-	}
+		expectedProducts := []response.ProductResponse{
+			{
+				ProductID:       "test-id",
+				Name:            "Test Product",
+				Category:        "Test Category",
+				OriginalPrice:   100,
+				DiscountedPrice: 90,
+			},
+			{
+				ProductID:       "test-id-2",
+				Name:            "Test Product 2",
+				Category:        "Test Category 2",
+				OriginalPrice:   200,
+				DiscountedPrice: 190,
+			},
+		}
 
-	mockRepo.On("GetAll").Return([]models.Product{
-		{
-			ProductID:       "test-id",
-			Name:            "Test Product",
-			Category:        "Test Category",
-			OriginalPrice:   100,
-			DiscountedPrice: 90,
-		},
-		{
-			ProductID:       "test-id-2",
-			Name:            "Test Product 2",
-			Category:        "Test Category 2",
-			OriginalPrice:   200,
-			DiscountedPrice: 190,
-		},
-	}, nil)
+		mockRepo.On("GetAll").Return([]models.Product{
+			{
+				ProductID:       "test-id",
+				Name:            "Test Product",
+				Category:        "Test Category",
+				OriginalPrice:   100,
+				DiscountedPrice: 90,
+			},
+			{
+				ProductID:       "test-id-2",
+				Name:            "Test Product 2",
+				Category:        "Test Category 2",
+				OriginalPrice:   200,
+				DiscountedPrice: 190,
+			},
+		}, nil)
 
-	products, err := productService.GetAll()
+		products, err := productService.GetAll()
 
-	assert.NoError(t, err, "Expected no error, GetAll() returned an error")
-	assert.Equal(t, expectedProducts, products, "Expected products to be equal to the expected products")
+		assert.NoError(t, err, "Expected no error, GetAll() returned an error")
+		assert.Equal(t, expectedProducts, products, "Expected products to be equal to the expected products")
 
-	mockRepo.AssertExpectations(t)
+		mockRepo.AssertExpectations(t)
+	})
+
+	t.Run("GetAll_Error", func(t *testing.T) {
+		mockRepo := new(mocks.MockProductRepository)
+		productService := NewProductServiceImpl(mockRepo)
+
+		mockRepo.On("GetAll").Return([]models.Product{}, assert.AnError)
+
+		products, err := productService.GetAll()
+
+		assert.Error(t, err, "Expected error Getting all products")
+		assert.Nil(t, products, "Expected products to be nil")
+	})
 
 }
 
 func TestPoductService_GetByID(t *testing.T) {
-	mockRepo := new(MockProductRepository)
-	productService := NewProductServiceImpl(mockRepo)
+	t.Run("GetByID_Success", func(t *testing.T) {
+		mockRepo := new(mocks.MockProductRepository)
+		productService := NewProductServiceImpl(mockRepo)
 
-	expectedProduct := response.ProductResponse{
-		ProductID:       "test-id",
-		Name:            "Test Product",
-		Category:        "Test Category",
-		OriginalPrice:   100,
-		DiscountedPrice: 90,
-	}
+		expectedProduct := response.ProductResponse{
+			ProductID:       "test-id",
+			Name:            "Test Product",
+			Category:        "Test Category",
+			OriginalPrice:   100,
+			DiscountedPrice: 90,
+		}
 
-	mockRepo.On("GetByID", "test-id").Return(models.Product{
-		ProductID:       "test-id",
-		Name:            "Test Product",
-		Category:        "Test Category",
-		OriginalPrice:   100,
-		DiscountedPrice: 90,
-	}, nil)
+		mockRepo.On("GetByID", "test-id").Return(models.Product{
+			ProductID:       "test-id",
+			Name:            "Test Product",
+			Category:        "Test Category",
+			OriginalPrice:   100,
+			DiscountedPrice: 90,
+		}, nil)
 
-	product, err := productService.GetByID("test-id")
+		product, err := productService.GetByID("test-id")
 
-	assert.NoError(t, err, "Expected no error, GetByID() returned an error")
-	assert.Equal(t, expectedProduct, product, "Expected product to be equal to the expected product")
+		assert.NoError(t, err, "Expected no error, GetByID() returned an error")
+		assert.Equal(t, expectedProduct, product, "Expected product to be equal to the expected product")
 
-	mockRepo.AssertExpectations(t)
+		mockRepo.AssertExpectations(t)
+	})
+
+	t.Run("GetByID_Error", func(t *testing.T) {
+		mockRepo := new(mocks.MockProductRepository)
+		productService := NewProductServiceImpl(mockRepo)
+
+		mockRepo.On("GetByID", "test-id").Return(models.Product{}, assert.AnError)
+
+		product, err := productService.GetByID("test-id")
+
+		assert.Error(t, err, "Expected error Getting product by ID")
+		assert.Equal(t, response.ProductResponse{}, product, "Expected product to be empty")
+	})
 }
 
 // func TestProductService_UpdateData(t *testing.T) {
