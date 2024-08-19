@@ -69,6 +69,8 @@ func (s *ScraperRepositoryImpl) DeleteAll() error {
 		return nil
 	}
 
+	var deleteErrors []error
+
 	// Iterar sobre los elementos escaneados y eliminarlos
 	for _, item := range result.Items {
 		deleteInput := &dynamodb.DeleteItemInput{
@@ -80,9 +82,15 @@ func (s *ScraperRepositoryImpl) DeleteAll() error {
 
 		_, err := s.db.DeleteItem(deleteInput)
 		if err != nil {
-			logrus.WithError(err).Error("[ProductRepositoryImpl.DeleteAll] error deleting products")
-			return errors.New("error deleting products")
+			logrus.WithError(err).Error("[ProductRepositoryImpl.DeleteAll] error deleting product")
+			deleteErrors = append(deleteErrors, err)
 		}
+	}
+
+	// Si hubo errores, retornarlos combinados
+	if len(deleteErrors) > 0 {
+		logrus.WithError(err).Error("[ProductRepositoryImpl.DeleteAll] one or more errors occurred while deleting products")
+		return errors.New("one or more errors occurred while deleting products")
 	}
 
 	return nil

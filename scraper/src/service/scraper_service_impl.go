@@ -27,8 +27,10 @@ func (s *ScraperServiceImpl) GetProducts() (bool, error) {
 
 	logrus.Info("[ProductServiceImpl.UpdateData] Scraping data started")
 
+	protocol := "https"
+
 	for _, categoryInfo := range scraper.Categories {
-		products, err := s.Scraper.ScrapeData(baseURL, categoryInfo.MaxPage, categoryInfo.Category)
+		products, err := s.Scraper.ScrapeData(protocol, baseURL, categoryInfo.MaxPage, categoryInfo.Category)
 		if err != nil {
 			logrus.WithError(err).Error("[ProductServiceImpl.UpdateData] Error scraping data")
 			return false, err

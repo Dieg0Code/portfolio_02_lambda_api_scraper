@@ -30,3 +30,8 @@ func (m *MockDynamoDB) GetItem(input *dynamodb.GetItemInput) (*dynamodb.GetItemO
 	args := m.Called(input)
 	return args.Get(0).(*dynamodb.GetItemOutput), args.Error(1)
 }
+
+func (m *MockDynamoDB) DeleteItem(input *dynamodb.DeleteItemInput) (*dynamodb.DeleteItemOutput, error) {
+	args := m.Called(input)
+	return args.Get(0).(*dynamodb.DeleteItemOutput), args.Error(1)
+}

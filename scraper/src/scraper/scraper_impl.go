@@ -42,12 +42,11 @@ func (s *ScraperImpl) CleanPrice(price string) ([]int, error) {
 		prices = append(prices, price)
 	}
 
-	// Retornar los precios como un slice de int
 	return prices, nil
 }
 
 // ScrapeData implements Scraper.
-func (s *ScraperImpl) ScrapeData(baseURL string, maxPage int, category string) ([]models.Product, error) {
+func (s *ScraperImpl) ScrapeData(protocol string, baseURL string, maxPage int, category string) ([]models.Product, error) {
 	var products []models.Product
 
 	s.Collector.OnHTML(".product-small.box", func(e *colly.HTMLElement) {
@@ -89,7 +88,7 @@ func (s *ScraperImpl) ScrapeData(baseURL string, maxPage int, category string) (
 	})
 
 	for i := 1; i <= maxPage; i++ {
-		url := fmt.Sprintf("https://%s/%s/page/%d/", baseURL, category, i)
+		url := fmt.Sprintf("%s://%s/%s/page/%d/", protocol, baseURL, category, i)
 		err := s.Collector.Visit(url)
 		if err != nil {
 			logrus.WithError(err).Errorf("Failed to visit page %d at URL %s", i, url)
