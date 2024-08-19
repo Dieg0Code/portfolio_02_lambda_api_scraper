@@ -18,6 +18,7 @@ type ScraperServiceImpl struct {
 // GetProducts implements ScraperService.
 func (s *ScraperServiceImpl) GetProducts() (bool, error) {
 	const baseURL string = "cugat.cl/categoria-producto"
+	protocol := "https"
 
 	err := s.ScraperRepository.DeleteAll()
 	if err != nil {
@@ -26,9 +27,6 @@ func (s *ScraperServiceImpl) GetProducts() (bool, error) {
 	}
 
 	logrus.Info("[ProductServiceImpl.UpdateData] Scraping data started")
-
-	protocol := "https"
-
 	for _, categoryInfo := range scraper.Categories {
 		products, err := s.Scraper.ScrapeData(protocol, baseURL, categoryInfo.MaxPage, categoryInfo.Category)
 		if err != nil {

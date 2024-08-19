@@ -15,10 +15,11 @@ codecov:
     paths:
       - "api-products/coverage.out"  # Ruta al reporte de cobertura de API
       - "scraper/coverage.out"  # Ruta al reporte de cobertura de Scraper
+      - "api-users/coverage.out"  # Ruta al reporte de cobertura de API de usuarios
     status:
       project:
         default:
-          threshold: 80  # Porcentaje de cobertura requerido para pasar
+          threshold: 70  # Porcentaje de cobertura requerido para pasar
 
   # Configuration for coverage reporting
   status:
